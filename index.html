@@ -33110,8 +33110,7 @@ function taskOpenCreateModal(planId, copyMode){
   if(typeVal==='once' && !execDateVal) execDateVal = tdStr;
   var executionRangesVal = (editPlan && Array.isArray(editPlan.executionRanges)) ? editPlan.executionRanges.slice(0,20) : [];
   if(countModeVal==='limited' && !executionRangesVal.length){
-    var defaultMonthDay = startDateVal.slice(5);
-    for(var rangeIndex=0;rangeIndex<dailyCount;rangeIndex++) executionRangesVal.push(defaultMonthDay+' '+startVal+' 至 '+defaultMonthDay+' '+endVal);
+    for(var rangeIndex=0;rangeIndex<dailyCount;rangeIndex++) executionRangesVal.push({start:startVal, end:endVal});
   }
   var executionRangeRowsHtml = executionRangesVal.map(function(rangeValue, rangeIndex){
     return taskExecutionRangeRowHtml(rangeIndex, taskExecutionRangeParts(rangeValue, startDateVal));
@@ -33366,28 +33365,31 @@ function taskCountModeChange(){
   if(defaultWindow) defaultWindow.style.display = (mode==='limited') ? 'none' : 'block';
   if(mode==='limited') taskBuildExecutionRanges();
 }
-function taskExecutionRangeParts(value, baseDate){
-  if(value && typeof value==='object' && value.start && value.end) return {start:value.start, end:value.end};
-  var dateValue = baseDate || (document.getElementById('taskStartDate')||{}).value || taskTodayStr();
-  var year = dateValue.slice(0,4);
-  var match = typeof value==='string' ? value.match(/^(\d{2}-\d{2})\s+(\d{2}:\d{2})\s+至\s+(\d{2}-\d{2})\s+(\d{2}:\d{2})$/) : null;
-  if(match) return {start:year+'-'+match[1]+'T'+match[2], end:year+'-'+match[3]+'T'+match[4]};
+function taskExecutionTimePart(value, fallback){
+  var match = String(value||'').match(/(\d{2}:\d{2})(?::\d{2})?$/);
+  return match ? match[1] : fallback;
+}
+function taskExecutionRangeParts(value){
+  if(value && typeof value==='object'){
+    return {start:taskExecutionTimePart(value.start,'08:00'), end:taskExecutionTimePart(value.end,'18:00')};
+  }
+  var match = typeof value==='string' ? value.match(/^(?:\d{2}-\d{2}\s+)?(\d{2}:\d{2})\s+至\s+(?:\d{2}-\d{2}\s+)?(\d{2}:\d{2})$/) : null;
+  if(match) return {start:match[1], end:match[2]};
   return taskExecutionRangeDefault();
 }
 function taskExecutionRangeRowHtml(index, values){
   return '<div class="task-execution-range-row" style="display:flex;align-items:center;gap:10px;margin-top:8px;">'
     + '<span style="width:48px;flex:0 0 48px;font-size:13px;color:#475569;text-align:center;">'+(index+1)+'</span>'
     + '<div style="flex:1;min-width:0;display:flex;align-items:center;border:1px solid #d1d5db;border-radius:6px;background:#fff;overflow:hidden;">'
-    + '<input type="datetime-local" class="task-execution-range-start" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始日期时间">'
+    + '<input type="time" class="task-execution-range-start" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始时间">'
     + '<span style="flex:0 0 auto;padding:0 5px;color:#94a3b8;font-size:12px;">至</span>'
-    + '<input type="datetime-local" class="task-execution-range-end" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束日期时间">'
+    + '<input type="time" class="task-execution-range-end" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束时间">'
     + '</div></div>';
 }
 function taskExecutionRangeDefault(){
-  var dateValue = (document.getElementById('taskStartDate')||{}).value || taskTodayStr();
   var startValue = (document.getElementById('taskStart')||{}).value || '08:00';
   var endValue = (document.getElementById('taskEnd')||{}).value || '18:00';
-  return {start:dateValue+'T'+startValue, end:dateValue+'T'+endValue};
+  return {start:startValue, end:endValue};
 }
 function taskBuildExecutionRanges(){
   var countInput = document.getElementById('taskDailyCount');
@@ -33455,14 +33457,14 @@ function taskConfirmCreate(){
     if(countMode==='limited'){
       if(dailyCount2<1 || dailyCount2>20){ showToast('⚠️ 次数需填写 1 至 20 的整数'); return false; }
       var rangeRows = Array.prototype.slice.call(document.querySelectorAll('#taskExecutionRanges .task-execution-range-row'));
-      if(rangeRows.length!==dailyCount2){ taskBuildExecutionRanges(); showToast('⚠️ 请选择每次执行的起止日期'); return false; }
+      if(rangeRows.length!==dailyCount2){ taskBuildExecutionRanges(); showToast('⚠️ 请选择每次执行的起止时间'); return false; }
       for(var rangeNo=0;rangeNo<rangeRows.length;rangeNo++){
         var rangeStartInput = rangeRows[rangeNo].querySelector('.task-execution-range-start');
         var rangeEndInput = rangeRows[rangeNo].querySelector('.task-execution-range-end');
         var rangeStartValue = rangeStartInput ? rangeStartInput.value : '';
         var rangeEndValue = rangeEndInput ? rangeEndInput.value : '';
-        if(!rangeStartValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的开始日期时间'); if(rangeStartInput) rangeStartInput.focus(); return false; }
-        if(!rangeEndValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的结束日期时间'); if(rangeEndInput) rangeEndInput.focus(); return false; }
+        if(!rangeStartValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的开始时间'); if(rangeStartInput) rangeStartInput.focus(); return false; }
+        if(!rangeEndValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的结束时间'); if(rangeEndInput) rangeEndInput.focus(); return false; }
         if(rangeEndValue<=rangeStartValue){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束时间需晚于开始时间'); rangeEndInput.focus(); return false; }
         executionRanges2.push({start:rangeStartValue, end:rangeEndValue});
       }
