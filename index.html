@@ -36701,25 +36701,13 @@ function procSaveActionParamModal(){
     }
   }
   if(procPointActionEditRows[idx].key === 'play_video'){
-    newParams.localVideoName = (newParams.localVideoName||'').trim();
-    if(!newParams.videoId && !newParams.localVideoName){
-      showToast('⚠️ 请选择已有视频或上传本地视频');
+    newParams.videoResourceId = (newParams.videoResourceId||'').trim();
+    newParams.videoName = (newParams.videoName||'').trim();
+    newParams.videoUrl = (newParams.videoUrl||'').trim();
+    if(!newParams.videoResourceId){ showToast('⚠️ 请填写视频资源 ID'); return; }
+    if(newParams.videoUrl && !procVideoReferenceUrlValid(newParams.videoUrl)){
+      showToast('⚠️ 播放地址格式不正确，仅支持 HTTP 或 HTTPS');
       return;
-    }
-    if(newParams.videoId){
-      newParams.videoSource = 'library';
-      newParams.localVideoName = '';
-      newParams.localVideoSize = '';
-      newParams.localVideoType = '';
-      newParams.mediaVideoId = '';
-    } else {
-      newParams.videoSource = 'local';
-      newParams.videoId = '';
-      newParams.mediaVideoId = '';
-      if(procPendingLocalVideoUrl){
-        try{ URL.revokeObjectURL(procPendingLocalVideoUrl); }catch(e){}
-        procPendingLocalVideoUrl = '';
-      }
     }
   }
   if(procPointActionEditRows[idx].key === 'play_text'){
@@ -36763,6 +36751,8 @@ function procSaveActionParamModal(){
   showToast('✅ 参数已保存');
 }
 function procCloseActionParamModal(){
+  var preview = document.getElementById('procVideoPreview');
+  if(preview){ try{ preview.pause(); }catch(e){} preview.removeAttribute('src'); }
   var ov2 = document.getElementById('overlayView2'); if(ov2) ov2.style.display='none';
   procPointActionEditRowIdx = null;
 }
@@ -36775,6 +36765,7 @@ function procOpenActionParamModalByIdx(idx){
   if(!meta.params || !meta.params.length){ showToast('该动作无可配置参数'); return; }
   procPointActionEditRowIdx = idx;
   if(rowData.key==='ptz_pose'){ procRenderPtzPoseParamModal(rowData,meta); return; }
+  if(rowData.key==='play_video'){ procRenderVideoReferenceParamModal(rowData,meta); return; }
   var paramsHtml = meta.params.map(function(pp){
     var val = (rowData.params && rowData.params[pp.key] !== undefined) ? rowData.params[pp.key] : (pp.default !== undefined ? pp.default : '');
     var selected = Array.isArray(val) ? val : [];
