@@ -33110,10 +33110,15 @@ function taskOpenCreateModal(planId, copyMode){
   if(typeVal==='once' && !execDateVal) execDateVal = tdStr;
   var executionRangesVal = (editPlan && Array.isArray(editPlan.executionRanges)) ? editPlan.executionRanges.slice(0,20) : [];
   if(countModeVal==='limited' && !executionRangesVal.length){
-    for(var rangeIndex=0;rangeIndex<dailyCount;rangeIndex++) executionRangesVal.push({start:startVal, end:endVal});
+    for(var rangeIndex=0;rangeIndex<dailyCount;rangeIndex++) executionRangesVal.push({
+      start:startVal,
+      end:endVal,
+      weekday:weekDaysVal.length ? weekDaysVal[rangeIndex%weekDaysVal.length] : rangeIndex%7
+    });
   }
   var executionRangeRowsHtml = executionRangesVal.map(function(rangeValue, rangeIndex){
-    return taskExecutionRangeRowHtml(rangeIndex, taskExecutionRangeParts(rangeValue, startDateVal));
+    var fallbackWeekday = weekDaysVal.length ? weekDaysVal[rangeIndex%weekDaysVal.length] : rangeIndex%7;
+    return taskExecutionRangeRowHtml(rangeIndex, taskExecutionRangeParts(rangeValue, fallbackWeekday), periodVal);
   }).join('');
   ov.style.display='flex';
   ov.innerHTML = ''
@@ -33137,7 +33142,7 @@ function taskOpenCreateModal(planId, copyMode){
     + '</div>'
     + '<div id="taskDailyCountWrap" style="display:'+(countModeVal==='limited'?'block':'none')+';padding:10px 12px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;">'
     + '<input id="taskDailyCount" class="pa-input" style="margin:0;" type="number" min="1" max="20" value="'+dailyCount+'" placeholder="请输入次数" oninput="taskBuildExecutionRanges()">'
-    + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;color:#64748b;"><span style="width:48px;flex:0 0 48px;text-align:center;">序号</span><div style="flex:1;min-width:0;display:flex;align-items:center;"><span style="flex:1;min-width:0;padding:0 9px;">开始时间</span><span style="width:22px;flex:0 0 22px;"></span><span style="flex:1;min-width:0;padding:0 9px;">结束时间</span></div></div>'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;color:#64748b;"><span style="width:48px;flex:0 0 48px;text-align:center;">序号</span><span class="task-execution-weekday-head" style="width:82px;flex:0 0 82px;text-align:center;display:'+(periodVal==='weekly'?'block':'none')+';">星期</span><div style="flex:1;min-width:0;display:flex;align-items:center;"><span style="flex:1;min-width:0;padding:0 9px;">开始时间</span><span style="width:22px;flex:0 0 22px;"></span><span style="flex:1;min-width:0;padding:0 9px;">结束时间</span></div></div>'
     + '<div id="taskExecutionRanges">'+executionRangeRowsHtml+'</div></div>'
     + '<div id="taskWeeklyDays" class="task-weekday-wrap" style="display:none;"><label class="task-form-label">选择星期</label><div class="task-weekday-picker">'
     + '<div id="taskWeekdayTrigger" class="task-weekday-trigger" onclick="taskToggleWeekdayPanel(event)"><span id="taskWeekdayText">'+weekDayText+'</span><span class="arrow">⌄</span></div>'
@@ -33182,10 +33187,12 @@ function taskOpenCopyModal(planId){
 }
 function taskPeriodChange(){
   var p = (document.getElementById('taskPeriod')||{}).value || 'daily';
+  var countMode = (document.querySelector('input[name="taskCountMode"]:checked')||{}).value || 'unlimited';
   var wd = document.getElementById('taskWeeklyDays');
   var md = document.getElementById('taskMonthlyDays');
-  if(wd) wd.style.display = (p==='weekly') ? 'block' : 'none';
+  if(wd) wd.style.display = (p==='weekly' && countMode!=='limited') ? 'block' : 'none';
   if(md) md.style.display = (p==='monthly') ? 'block' : 'none';
+  taskSyncExecutionRangeWeekday();
   if(p!=='weekly') taskCloseWeekdayPanel();
   if(p!=='monthly') taskCloseMonthlyPanels();
   if(p==='monthly') taskMonthlyModeChange();
@@ -33364,32 +33371,53 @@ function taskCountModeChange(){
   if(wrap) wrap.style.display = (mode==='limited') ? 'block' : 'none';
   if(defaultWindow) defaultWindow.style.display = (mode==='limited') ? 'none' : 'block';
   if(mode==='limited') taskBuildExecutionRanges();
+  taskPeriodChange();
+}
+function taskSyncExecutionRangeWeekday(){
+  var period = (document.getElementById('taskPeriod')||{}).value || 'daily';
+  var countMode = (document.querySelector('input[name="taskCountMode"]:checked')||{}).value || 'unlimited';
+  var show = period==='weekly' && countMode==='limited';
+  var head = document.querySelector('.task-execution-weekday-head');
+  if(head) head.style.display = show ? 'block' : 'none';
+  Array.prototype.slice.call(document.querySelectorAll('.task-execution-weekday')).forEach(function(select){
+    select.style.display = show ? 'block' : 'none';
+  });
 }
 function taskExecutionTimePart(value, fallback){
   var match = String(value||'').match(/(\d{2}:\d{2})(?::\d{2})?$/);
   return match ? match[1] : fallback;
 }
-function taskExecutionRangeParts(value){
+function taskExecutionRangeParts(value, fallbackWeekday){
+  var weekday = parseInt(fallbackWeekday,10);
+  if(!(weekday>=0 && weekday<=6)) weekday = 0;
   if(value && typeof value==='object'){
-    return {start:taskExecutionTimePart(value.start,'08:00'), end:taskExecutionTimePart(value.end,'18:00')};
+    var savedWeekday = parseInt(value.weekday,10);
+    return {start:taskExecutionTimePart(value.start,'08:00'), end:taskExecutionTimePart(value.end,'18:00'), weekday:(savedWeekday>=0 && savedWeekday<=6)?savedWeekday:weekday};
   }
   var match = typeof value==='string' ? value.match(/^(?:\d{2}-\d{2}\s+)?(\d{2}:\d{2})\s+至\s+(?:\d{2}-\d{2}\s+)?(\d{2}:\d{2})$/) : null;
-  if(match) return {start:match[1], end:match[2]};
-  return taskExecutionRangeDefault();
+  if(match) return {start:match[1], end:match[2], weekday:weekday};
+  return taskExecutionRangeDefault(weekday);
 }
-function taskExecutionRangeRowHtml(index, values){
+function taskExecutionRangeRowHtml(index, values, period){
+  var weekday = parseInt(values.weekday,10);
+  if(!(weekday>=0 && weekday<=6)) weekday = index%7;
+  var weekdayLabels = ['周一','周二','周三','周四','周五','周六','周日'];
+  var weekdayOptions = weekdayLabels.map(function(label,value){ return '<option value="'+value+'" '+(value===weekday?'selected':'')+'>'+label+'</option>'; }).join('');
   return '<div class="task-execution-range-row" style="display:flex;align-items:center;gap:10px;margin-top:8px;">'
     + '<span style="width:48px;flex:0 0 48px;font-size:13px;color:#475569;text-align:center;">'+(index+1)+'</span>'
+    + '<select class="task-execution-weekday" aria-label="第'+(index+1)+'次执行星期" style="width:82px;flex:0 0 82px;height:34px;border:1px solid #d1d5db;border-radius:6px;background:#fff;padding:0 7px;font-size:12px;color:#334155;outline:none;display:'+(period==='weekly'?'block':'none')+';">'+weekdayOptions+'</select>'
     + '<div style="flex:1;min-width:0;display:flex;align-items:center;border:1px solid #d1d5db;border-radius:6px;background:#fff;overflow:hidden;">'
     + '<input type="time" class="task-execution-range-start" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始时间">'
     + '<span style="flex:0 0 auto;padding:0 5px;color:#94a3b8;font-size:12px;">至</span>'
     + '<input type="time" class="task-execution-range-end" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束时间">'
     + '</div></div>';
 }
-function taskExecutionRangeDefault(){
+function taskExecutionRangeDefault(weekday){
   var startValue = (document.getElementById('taskStart')||{}).value || '08:00';
   var endValue = (document.getElementById('taskEnd')||{}).value || '18:00';
-  return {start:startValue, end:endValue};
+  var weekdayValue = parseInt(weekday,10);
+  if(!(weekdayValue>=0 && weekdayValue<=6)) weekdayValue = 0;
+  return {start:startValue, end:endValue, weekday:weekdayValue};
 }
 function taskBuildExecutionRanges(){
   var countInput = document.getElementById('taskDailyCount');
@@ -33400,15 +33428,18 @@ function taskBuildExecutionRanges(){
   var oldValues = Array.prototype.slice.call(container.querySelectorAll('.task-execution-range-row')).map(function(row){
     return {
       start:(row.querySelector('.task-execution-range-start')||{}).value || '',
-      end:(row.querySelector('.task-execution-range-end')||{}).value || ''
+      end:(row.querySelector('.task-execution-range-end')||{}).value || '',
+      weekday:parseInt((row.querySelector('.task-execution-weekday')||{}).value,10)
     };
   });
+  var period = (document.getElementById('taskPeriod')||{}).value || 'daily';
   var rows = [];
   for(var i=0;i<count;i++){
-    var values = oldValues[i] || taskExecutionRangeDefault();
-    rows.push(taskExecutionRangeRowHtml(i, values));
+    var values = oldValues[i] || taskExecutionRangeDefault(i%7);
+    rows.push(taskExecutionRangeRowHtml(i, values, period));
   }
   container.innerHTML = rows.join('');
+  taskSyncExecutionRangeWeekday();
 }
 function taskConfirmCreate(){
   var name = (document.getElementById('taskName').value||'').trim();
@@ -33461,16 +33492,22 @@ function taskConfirmCreate(){
       for(var rangeNo=0;rangeNo<rangeRows.length;rangeNo++){
         var rangeStartInput = rangeRows[rangeNo].querySelector('.task-execution-range-start');
         var rangeEndInput = rangeRows[rangeNo].querySelector('.task-execution-range-end');
+        var rangeWeekdayInput = rangeRows[rangeNo].querySelector('.task-execution-weekday');
         var rangeStartValue = rangeStartInput ? rangeStartInput.value : '';
         var rangeEndValue = rangeEndInput ? rangeEndInput.value : '';
         if(!rangeStartValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的开始时间'); if(rangeStartInput) rangeStartInput.focus(); return false; }
         if(!rangeEndValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的结束时间'); if(rangeEndInput) rangeEndInput.focus(); return false; }
         if(rangeEndValue<=rangeStartValue){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束时间需晚于开始时间'); rangeEndInput.focus(); return false; }
-        executionRanges2.push({start:rangeStartValue, end:rangeEndValue});
+        var rangeWeekdayValue = rangeWeekdayInput ? parseInt(rangeWeekdayInput.value,10) : null;
+        if(period==='weekly' && !(rangeWeekdayValue>=0 && rangeWeekdayValue<=6)){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的星期'); if(rangeWeekdayInput) rangeWeekdayInput.focus(); return false; }
+        executionRanges2.push({start:rangeStartValue, end:rangeEndValue, weekday:rangeWeekdayValue});
       }
     }
     /* v20.9.100 周期子选项 */
     var weekDays = Array.prototype.slice.call(document.querySelectorAll('#taskWeeklyDays input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
+    if(period==='weekly' && countMode==='limited'){
+      weekDays = executionRanges2.map(function(range){ return range.weekday; }).filter(function(value,index,values){ return values.indexOf(value)===index; }).sort(function(a,b){ return a-b; });
+    }
     var monthValues = Array.prototype.slice.call(document.querySelectorAll('#taskMonthOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
     var monthlyMode2 = (document.querySelector('input[name="taskMonthlyMode"]:checked')||{}).value || 'week';
     var monthlyWeekDays2 = Array.prototype.slice.call(document.querySelectorAll('#taskMonthlyWeekOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
