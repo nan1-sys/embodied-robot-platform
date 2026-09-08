@@ -36771,7 +36771,6 @@ function procRenderVideoReferenceParamModal(rowData,meta){
     ? '<span>🎬</span><span class="proc-audio-upload-name" title="'+paEscapeAttr(localVideoName)+'">'+esc(localVideoName)+'</span>'+(localVideoSize?'<span style="flex:none;color:#94a3b8;">'+esc(localVideoSize)+'</span>':'')+'<button type="button" class="proc-audio-upload-remove" onclick="procClearLocalVideoSelection()" title="移除本地视频">×</button>'
     : '<span>未选择文件</span>';
   var body = ''
-    + '<div class="video-ref-tip">支持直接填写视频中台的存储或播放地址，也可以临时上传本地视频。平台只保存当前动作所需的引用信息，不建立独立视频库。</div>'
     + '<div class="video-source-label">视频来源</div><div class="video-source-options">'
     + '<label class="video-source-option '+(source==='platform'?'selected':'')+'" data-source="platform"><input type="radio" name="procVideoSource" value="platform" '+(source==='platform'?'checked':'')+' onchange="procVideoSourceChange(\'platform\')"><span><strong>视频中台地址</strong><small>填写存储地址、播放地址或资源 ID</small></span></label>'
     + '<label class="video-source-option '+(source==='local'?'selected':'')+'" data-source="local"><input type="radio" name="procVideoSource" value="local" '+(source==='local'?'checked':'')+' onchange="procVideoSourceChange(\'local\')"><span><strong>本地上传</strong><small>从当前电脑选择视频文件</small></span></label></div>'
