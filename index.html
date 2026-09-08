@@ -33091,13 +33091,13 @@ function taskOpenCreateModal(planId, copyMode){
   var monthValues = (editPlan && Array.isArray(editPlan.monthValues) && editPlan.monthValues.length)
     ? editPlan.monthValues.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=1 && v<=12; })
     : [1,2,3,4,5,6,7,8,9,10,11,12];
-  var monthlyMode = editPlan && editPlan.monthlyMode ? editPlan.monthlyMode : ((editPlan && editPlan.period==='monthly') ? 'date' : 'week');
+  var monthlyMode = editPlan && editPlan.monthlyMode ? editPlan.monthlyMode : 'date';
   var monthlyWeekDays = (editPlan && Array.isArray(editPlan.monthlyWeekDays) && editPlan.monthlyWeekDays.length)
     ? editPlan.monthlyWeekDays.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=0 && v<=6; })
     : [0,1,2,3,4,5,6];
   var monthDaysVal = (editPlan && Array.isArray(editPlan.monthDays) && editPlan.monthDays.length)
     ? editPlan.monthDays.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=1 && v<=31; })
-    : (function(){ var values=[]; for(var day=1;day<=31;day++) values.push(day); return values; })();
+    : [parseInt((editPlan && editPlan.startDate ? editPlan.startDate : taskTodayStr()).slice(8,10),10)||1];
   var monthLabels = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
   var monthOptionsHtml = (function(){ var html=''; for(var month=1;month<=12;month++){ var checked=monthValues.indexOf(month)>-1; html+='<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+month+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+monthLabels[month-1]+'</span></label>'; } return html; })();
   var monthlyWeekOptionsHtml = weekDayOrder.map(function(value){ var checked=monthlyWeekDays.indexOf(value)>-1; return '<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+value+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+weekDayLabels[value]+'</span></label>'; }).join('');
@@ -33154,6 +33154,12 @@ function taskOpenCreateModal(planId, copyMode){
     + '<div id="taskWeekdayPanel" class="task-weekday-panel">'
     + '<div class="task-weekday-presets"><button type="button" class="task-weekday-preset" data-mode="daily" onclick="taskSetWeekdayPreset(\'daily\')">每天</button><button type="button" class="task-weekday-preset" data-mode="workday" onclick="taskSetWeekdayPreset(\'workday\')">工作日</button><button type="button" class="task-weekday-preset" data-mode="weekend" onclick="taskSetWeekdayPreset(\'weekend\')">周末</button></div>'
     + '<div class="task-weekday-grid">'+weekDayOptionsHtml+'</div></div></div></div>'
+    + '<div id="taskMonthlyDays" class="task-weekday-wrap" style="display:none;">'
+    + '<label class="task-form-label">月</label><div class="task-weekday-picker task-schedule-picker"><div id="taskMonthTrigger" class="task-weekday-trigger" onclick="taskToggleSchedulePanel(\'taskMonthPanel\',\'taskMonthTrigger\',event)"><span id="taskMonthText">'+monthText+'</span><span class="arrow">⌄</span></div><div id="taskMonthPanel" class="task-weekday-panel"><div class="task-weekday-presets"><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'months\',true)">全选</button><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'months\',false)">取消全选</button></div><div id="taskMonthOptions" class="task-weekday-grid">'+monthOptionsHtml+'</div></div></div>'
+    + '<div class="task-monthly-mode-row"><label class="task-monthly-mode"><input type="radio" name="taskMonthlyMode" value="week" '+(monthlyMode==='week'?'checked':'')+' onchange="taskMonthlyModeChange()">按周选择</label><label class="task-monthly-mode"><input type="radio" name="taskMonthlyMode" value="date" '+(monthlyMode==='date'?'checked':'')+' onchange="taskMonthlyModeChange()">按日期选择</label></div>'
+    + '<div id="taskMonthlyWeekWrap"><label class="task-form-label">周</label><div class="task-weekday-picker task-schedule-picker"><div id="taskMonthlyWeekTrigger" class="task-weekday-trigger" onclick="taskToggleSchedulePanel(\'taskMonthlyWeekPanel\',\'taskMonthlyWeekTrigger\',event)"><span id="taskMonthlyWeekText">'+monthlyWeekText+'</span><span class="arrow">⌄</span></div><div id="taskMonthlyWeekPanel" class="task-weekday-panel"><div class="task-weekday-presets"><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'weekdays\',true)">全选</button><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'weekdays\',false)">取消全选</button></div><div id="taskMonthlyWeekOptions" class="task-weekday-grid">'+monthlyWeekOptionsHtml+'</div></div></div></div>'
+    + '<div id="taskMonthlyDateWrap"><label class="task-form-label">日</label><div class="task-weekday-picker task-schedule-picker"><div id="taskMonthDayTrigger" class="task-weekday-trigger" onclick="taskToggleSchedulePanel(\'taskMonthDayPanel\',\'taskMonthDayTrigger\',event)"><span id="taskMonthDayText">'+monthDayText+'</span><span class="arrow">⌄</span></div><div id="taskMonthDayPanel" class="task-weekday-panel"><div class="task-weekday-presets"><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'days\',true)">全选</button><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'days\',false)">取消全选</button></div><div id="taskMonthDayOptions" class="task-weekday-grid task-month-day-grid">'+monthDayOptionsHtml+'</div></div></div></div>'
+    + '</div>'
     + '<div id="taskDefaultWindowWrap" style="display:'+(countModeVal==='limited'?'none':'block')+';"><div style="display:flex;gap:12px;"><div style="flex:1"><label class="task-form-label">开始时间</label><input id="taskStart" class="pa-input" type="time" value="'+startVal+'"></div><div style="flex:1"><label class="task-form-label">结束时间</label><input id="taskEnd" class="pa-input" type="time" value="'+endVal+'"></div></div>'
     + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">提示：以上为机器人执行任务的工作时间窗口，任务将在该时间段内执行</div></div>'
     + '<label class="task-form-label">任务开始日期</label><input id="taskStartDate" class="pa-input" type="date" value="'+startDateVal+'" min="'+tdStr+'" onchange="var e=document.getElementById(\'taskEndDate\'); if(e){ e.min=this.value; }">'
@@ -33190,12 +33196,12 @@ function taskPeriodChange(){
   var wd = document.getElementById('taskWeeklyDays');
   var md = document.getElementById('taskMonthlyDays');
   if(wd) wd.style.display = (p==='weekly' && countMode!=='limited') ? 'block' : 'none';
-  if(md) md.style.display = (p==='monthly') ? 'block' : 'none';
+  if(md) md.style.display = (p==='monthly' && countMode!=='limited') ? 'block' : 'none';
   if(countMode==='limited') taskBuildExecutionRanges();
   else taskSyncExecutionRangeWeekday();
   if(p!=='weekly') taskCloseWeekdayPanel();
-  if(p!=='monthly') taskCloseMonthlyPanels();
-  if(p==='monthly') taskMonthlyModeChange();
+  if(p!=='monthly' || countMode==='limited') taskCloseMonthlyPanels();
+  if(p==='monthly' && countMode!=='limited') taskMonthlyModeChange();
 }
 function taskToggleWeekdayPanel(ev){
   taskToggleSchedulePanel('taskWeekdayPanel','taskWeekdayTrigger',ev);
@@ -33316,10 +33322,15 @@ function taskTypeChange(){
     var wks = document.querySelectorAll('#taskWeeklyDays input[type=checkbox]');
     for(var wi=0;wi<wks.length;wi++) wks[wi].checked = true;
     taskUpdateWeekdayUI();
-    var mds = document.querySelectorAll('#taskMonthlyDays input[type=checkbox]');
-    for(var mi=0;mi<mds.length;mi++) mds[mi].checked = true;
-    var monthlyWeekMode = document.querySelector('input[name="taskMonthlyMode"][value="week"]');
-    if(monthlyWeekMode) monthlyWeekMode.checked = true;
+    var monthChecks = document.querySelectorAll('#taskMonthOptions input[type=checkbox]');
+    for(var mi=0;mi<monthChecks.length;mi++) monthChecks[mi].checked = true;
+    var monthlyWeekChecks = document.querySelectorAll('#taskMonthlyWeekOptions input[type=checkbox]');
+    for(var mwi=0;mwi<monthlyWeekChecks.length;mwi++) monthlyWeekChecks[mwi].checked = true;
+    var monthDayChecks = document.querySelectorAll('#taskMonthDayOptions input[type=checkbox]');
+    var todayDay = parseInt(td.slice(8,10),10);
+    for(var mdi=0;mdi<monthDayChecks.length;mdi++) monthDayChecks[mdi].checked = parseInt(monthDayChecks[mdi].value,10)===todayDay;
+    var monthlyDateMode = document.querySelector('input[name="taskMonthlyMode"][value="date"]');
+    if(monthlyDateMode) monthlyDateMode.checked = true;
     taskMonthlyModeChange();
     taskUpdateMonthlyUI();
     var cmU = document.querySelector('input[name="taskCountMode"][value="unlimited"]');
