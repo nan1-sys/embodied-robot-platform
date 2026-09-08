@@ -36768,18 +36768,20 @@ function procSaveActionParamModal(){
     newParams.localVideoName = (newParams.localVideoName||'').trim();
     if(newParams.videoSource==='local'){
       if(!newParams.localVideoName){ showToast('⚠️ 请选择本地视频文件'); return; }
-      newParams.videoResourceId = '';
-      newParams.videoName = '';
-      newParams.videoUrl = '';
+      delete newParams.videoResourceId;
+      delete newParams.videoName;
+      delete newParams.videoUrl;
     } else {
       if(!newParams.videoUrl && !newParams.videoResourceId){ showToast('⚠️ 请填写视频中台地址或视频资源 ID'); return; }
       if(newParams.videoUrl && !procVideoReferenceUrlValid(newParams.videoUrl)){
         showToast('⚠️ 视频地址格式不正确，仅支持 HTTP 或 HTTPS');
         return;
       }
-      newParams.localVideoName = '';
-      newParams.localVideoSize = '';
-      newParams.localVideoType = '';
+      if(!newParams.videoResourceId) delete newParams.videoResourceId;
+      if(!newParams.videoName) delete newParams.videoName;
+      delete newParams.localVideoName;
+      delete newParams.localVideoSize;
+      delete newParams.localVideoType;
     }
   }
   if(procPointActionEditRows[idx].key === 'play_text'){
