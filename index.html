@@ -30547,6 +30547,14 @@ function procVideoOptionsHtml(selectedId, f){
 }
 /* v20.9.159 流程动作本地视频的预览地址，在同步到视频管理时一并保留 */
 var procPendingLocalVideoUrl = '';
+var procPendingLocalVideoValidation = 'idle';
+var procLocalVideoValidationSeq = 0;
+var PROC_LOCAL_VIDEO_MAX_SIZE = 500 * 1024 * 1024;
+function procFormatVideoDuration(seconds){
+  var total = Math.max(0, Math.round(Number(seconds)||0));
+  var h = Math.floor(total/3600), m = Math.floor((total%3600)/60), s = total%60;
+  return (h ? String(h).padStart(2,'0')+':' : '')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
 function procUpdateLocalVideoInfo(name, size){
   var info = document.getElementById('procLocalVideoInfo');
   if(!info) return;
@@ -30561,6 +30569,8 @@ function procUpdateLocalVideoInfo(name, size){
 function procClearLocalVideoSelection(){
   var body = document.getElementById('procParamModalBody');
   if(!body) return;
+  procLocalVideoValidationSeq++;
+  procPendingLocalVideoValidation = 'idle';
   ['localVideoName','localVideoSize','localVideoType','mediaVideoId'].forEach(function(key){
     var input = body.querySelector('[data-pkey="'+key+'"]');
     if(input) input.value = '';
@@ -30579,7 +30589,23 @@ function procOnLocalVideoSelected(input){
   if(!file) return;
   if(!/\.(mp4|mov|avi|mkv|webm)$/i.test(file.name||'')){
     showToast('⚠️ 请选择 MP4、MOV、AVI、MKV 或 WEBM 视频文件');
-    input.value = '';
+    procClearLocalVideoSelection();
+    var typeStatus = document.getElementById('procVideoRefStatus');
+    if(typeStatus){ typeStatus.className='video-ref-status error'; typeStatus.textContent='文件格式不支持，请重新选择'; }
+    return;
+  }
+  if(!file.size){
+    showToast('⚠️ 视频文件为空，请重新选择');
+    procClearLocalVideoSelection();
+    var emptyStatus = document.getElementById('procVideoRefStatus');
+    if(emptyStatus){ emptyStatus.className='video-ref-status error'; emptyStatus.textContent='视频文件为空，请重新选择'; }
+    return;
+  }
+  if(file.size > PROC_LOCAL_VIDEO_MAX_SIZE){
+    showToast('⚠️ 本地视频不能超过 500MB');
+    procClearLocalVideoSelection();
+    var sizeStatus = document.getElementById('procVideoRefStatus');
+    if(sizeStatus){ sizeStatus.className='video-ref-status error'; sizeStatus.textContent='文件超过 500MB，请重新选择'; }
     return;
   }
   var body = document.getElementById('procParamModalBody');
@@ -30596,6 +30622,29 @@ function procOnLocalVideoSelected(input){
   if(typeInput) typeInput.value = (file.name.split('.').pop()||'').toUpperCase();
   if(videoSelect) videoSelect.value = '';
   procUpdateLocalVideoInfo(file.name||'', fileSize);
+  procPendingLocalVideoValidation = 'checking';
+  var status = document.getElementById('procVideoRefStatus');
+  if(status){ status.className='video-ref-status'; status.textContent='正在自动校验视频文件…'; }
+  var validationSeq = ++procLocalVideoValidationSeq;
+  var probe = document.createElement('video');
+  var settled = false;
+  var finish = function(ok, message){
+    if(settled || validationSeq!==procLocalVideoValidationSeq) return;
+    settled = true;
+    procPendingLocalVideoValidation = ok ? 'valid' : 'invalid';
+    try{ probe.removeAttribute('src'); probe.load(); }catch(e){}
+    var currentStatus = document.getElementById('procVideoRefStatus');
+    if(currentStatus){ currentStatus.className='video-ref-status '+(ok?'success':'error'); currentStatus.textContent=message; }
+  };
+  probe.preload = 'metadata';
+  probe.onloadedmetadata = function(){
+    var duration = Number(probe.duration);
+    if(!isFinite(duration) || duration<=0){ finish(false,'无法读取有效的视频时长，请重新选择'); return; }
+    finish(true,'文件可用 · '+((file.name.split('.').pop()||'').toUpperCase())+' · '+fileSize+' · 时长 '+procFormatVideoDuration(duration));
+  };
+  probe.onerror = function(){ finish(false,'视频文件无法读取或编码不受支持，请重新选择'); };
+  probe.src = procPendingLocalVideoUrl;
+  setTimeout(function(){ finish(false,'视频文件读取超时，请重新选择'); },5000);
 }
 function procMediaDateTime(){
   var d = new Date();
