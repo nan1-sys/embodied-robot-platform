@@ -26988,9 +26988,12 @@ function rpSaveParams(){
 }
 function rpResetDefaults(){
   if(!window.confirm('确认恢复为默认参数配置？当前修改将丢失。')) return;
+  var currentType = rpFindType(robotParamState.selectedTypeId);
+  var currentTypeKey = currentType && currentType.key;
   robotTypeParams = rpSeedParams();
-  robotParamState.selectedTypeId = robotTypeParams[0].id;
-  robotParamState.view = 'list';
+  var resetCurrentType = robotTypeParams.filter(function(t){ return t.key===currentTypeKey; })[0] || robotTypeParams[0];
+  robotParamState.selectedTypeId = resetCurrentType && resetCurrentType.id;
+  robotParamState.view = 'detail';
   rpSaveParamsToStorage(); rpRerender();
   showToast('已重置为默认配置');
 }
