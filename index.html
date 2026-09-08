@@ -30633,6 +30633,7 @@ function procOnLocalVideoSelected(input){
     settled = true;
     procPendingLocalVideoValidation = ok ? 'valid' : 'invalid';
     try{ probe.removeAttribute('src'); probe.load(); }catch(e){}
+    if(!ok) procClearLocalVideoSelection();
     var currentStatus = document.getElementById('procVideoRefStatus');
     if(currentStatus){ currentStatus.className='video-ref-status '+(ok?'success':'error'); currentStatus.textContent=message; }
   };
@@ -36836,6 +36837,8 @@ function procSaveActionParamModal(){
     newParams.localVideoName = (newParams.localVideoName||'').trim();
     if(newParams.videoSource==='local'){
       if(!newParams.localVideoName){ showToast('⚠️ 请选择本地视频文件'); return; }
+      if(procPendingLocalVideoValidation==='checking'){ showToast('⚠️ 正在校验视频文件，请稍候'); return; }
+      if(procPendingLocalVideoValidation==='invalid'){ showToast('⚠️ 视频文件校验未通过，请重新选择'); return; }
       delete newParams.videoResourceId;
       delete newParams.videoName;
       delete newParams.videoUrl;
