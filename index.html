@@ -3865,6 +3865,26 @@ bdeploy-model-group { margin-bottom:8px; }
 .ptz-pose-item-ops .delete { color:#ef4444; }
 .ptz-pose-wait { margin-top:14px; padding-top:12px; border-top:1px solid #eef2f7; display:flex; align-items:center; gap:12px; color:#475569; font-size:13px; }
 @media(max-width:720px){ .ptz-pose-grid{grid-template-columns:1fr;} .ptz-pose-item{grid-template-columns:1fr;} .ptz-pose-item-ops{justify-content:flex-start;} }
+/* 视频中台资源引用：平台仅保存资源标识与可选联调地址 */
+.proc-param-modal-box.video-ref-modal { width:620px; max-height:90vh; display:flex; flex-direction:column; }
+.video-ref-modal .proc-param-modal-body { overflow-y:auto; }
+.video-ref-tip { margin-bottom:16px; padding:10px 12px; border:1px solid #bfdbfe; border-radius:8px; background:#eff6ff; color:#475569; font-size:12px; line-height:1.6; }
+.video-ref-field { margin-bottom:14px; }
+.video-ref-field label { display:block; margin-bottom:6px; color:#475569; font-size:12px; font-weight:600; }
+.video-ref-field label.required:before { content:"*"; margin-right:3px; color:#ef4444; }
+.video-ref-field input { width:100%; box-sizing:border-box; padding:9px 10px; border:1px solid #d1d5db; border-radius:7px; color:#334155; outline:none; }
+.video-ref-field input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.12); }
+.video-ref-help { margin-top:5px; color:#94a3b8; font-size:11px; line-height:1.5; }
+.video-ref-actions { display:flex; align-items:center; gap:9px; margin-top:8px; padding:11px 12px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc; }
+.video-ref-status { flex:1; min-width:0; color:#64748b; font-size:12px; line-height:1.5; }
+.video-ref-status.success { color:#059669; }
+.video-ref-status.error { color:#dc2626; }
+.video-ref-action { flex:none; height:32px; padding:0 13px; border:1px solid #93c5fd; border-radius:7px; background:#eff6ff; color:#2563eb; cursor:pointer; font-size:12px; font-weight:600; }
+.video-ref-action.primary { border-color:#2563eb; background:#2563eb; color:#fff; }
+.video-ref-preview { display:none; margin-top:12px; padding:10px; border:1px solid #e2e8f0; border-radius:8px; background:#0f172a; }
+.video-ref-preview video { display:block; width:100%; max-height:260px; border-radius:5px; background:#000; }
+.video-ref-wait { margin-top:16px; padding-top:13px; border-top:1px solid #eef2f7; display:flex; align-items:center; gap:12px; color:#475569; font-size:13px; }
+@media(max-width:620px){ .video-ref-actions{align-items:stretch;flex-direction:column;} .video-ref-action{width:100%;} }
 .proc-modal-actions-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid #f1f5f9; background:#ffffff; }
 .proc-modal-actions-title { font-size:14px; color:#475569; font-weight:600; }
 .proc-actions-toolbar--blue { background:#f8fafc; border-bottom:1px solid #e2e8f0; padding:10px 40px; }
@@ -29583,8 +29603,9 @@ var paTaskActions = [
     {key:'waitForCompletion',label:'等待完成',type:'switch',default:true}
   ] },
   { key:'play_video', label:'播放视频', params:[
-    {key:'videoId',label:'选择已有视频',type:'video_select',default:''},
-    {key:'localVideoName',label:'本地上传',type:'video_upload',default:''},
+    {key:'videoResourceId',label:'视频资源 ID',type:'text',default:''},
+    {key:'videoName',label:'视频名称',type:'text',default:''},
+    {key:'videoUrl',label:'播放地址',type:'text',default:''},
     {key:'waitForCompletion',label:'等待完成',type:'switch',default:true}
   ] },
   { key:'record_video', label:'录制视频', params:[
