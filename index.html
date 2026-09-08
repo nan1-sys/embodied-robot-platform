@@ -29610,11 +29610,13 @@ var paTaskActions = [
     {key:'waitForCompletion',label:'等待完成',type:'switch',default:true}
   ] },
   { key:'play_video', label:'播放视频', params:[
-    {key:'videoSource',label:'视频来源',type:'text',default:'platform'},
+    {key:'videoSource',label:'视频来源',type:'video_source',default:'platform'},
     {key:'videoResourceId',label:'视频资源 ID',type:'text',default:''},
     {key:'videoName',label:'视频名称',type:'text',default:''},
     {key:'videoUrl',label:'播放地址',type:'text',default:''},
     {key:'localVideoName',label:'本地视频',type:'text',default:''},
+    {key:'localVideoSize',label:'文件大小',type:'text',default:''},
+    {key:'localVideoType',label:'文件格式',type:'text',default:''},
     {key:'waitForCompletion',label:'等待完成',type:'switch',default:true}
   ] },
   { key:'record_video', label:'录制视频', params:[
@@ -30337,6 +30339,7 @@ function paSaveTaskModal(){
 }
 function paEscapeAttr(s){ return String(s||'').replace(/\"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function paFormatParamValue(def, value){
+  if(def && def.type === 'video_source') return value === 'local' ? '本地上传' : '视频中台地址';
   if(def && def.type === 'audio_select'){
     var audio = (contentAudioList||[]).filter(function(a){ return a.id===value; })[0];
     return audio ? audio.name : '未选择';
