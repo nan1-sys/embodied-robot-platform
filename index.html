@@ -33110,15 +33110,20 @@ function taskOpenCreateModal(planId, copyMode){
   if(typeVal==='once' && !execDateVal) execDateVal = tdStr;
   var executionRangesVal = (editPlan && Array.isArray(editPlan.executionRanges)) ? editPlan.executionRanges.slice(0,20) : [];
   if(countModeVal==='limited' && !executionRangesVal.length){
+    var defaultRangeDate = taskExecutionMonthDayPart(startDateVal, startDateVal);
     for(var rangeIndex=0;rangeIndex<dailyCount;rangeIndex++) executionRangesVal.push({
       start:startVal,
       end:endVal,
-      weekday:weekDaysVal.length ? weekDaysVal[rangeIndex%weekDaysVal.length] : rangeIndex%7
+      weekday:weekDaysVal.length ? weekDaysVal[rangeIndex%weekDaysVal.length] : rangeIndex%7,
+      startMonth:defaultRangeDate.month,
+      startDay:defaultRangeDate.day,
+      endMonth:defaultRangeDate.month,
+      endDay:defaultRangeDate.day
     });
   }
   var executionRangeRowsHtml = executionRangesVal.map(function(rangeValue, rangeIndex){
     var fallbackWeekday = weekDaysVal.length ? weekDaysVal[rangeIndex%weekDaysVal.length] : rangeIndex%7;
-    return taskExecutionRangeRowHtml(rangeIndex, taskExecutionRangeParts(rangeValue, fallbackWeekday), periodVal);
+    return taskExecutionRangeRowHtml(rangeIndex, taskExecutionRangeParts(rangeValue, fallbackWeekday, startDateVal), periodVal);
   }).join('');
   ov.style.display='flex';
   ov.innerHTML = ''
@@ -33186,7 +33191,8 @@ function taskPeriodChange(){
   var md = document.getElementById('taskMonthlyDays');
   if(wd) wd.style.display = (p==='weekly' && countMode!=='limited') ? 'block' : 'none';
   if(md) md.style.display = (p==='monthly') ? 'block' : 'none';
-  taskSyncExecutionRangeWeekday();
+  if(countMode==='limited') taskBuildExecutionRanges();
+  else taskSyncExecutionRangeWeekday();
   if(p!=='weekly') taskCloseWeekdayPanel();
   if(p!=='monthly') taskCloseMonthlyPanels();
   if(p==='monthly') taskMonthlyModeChange();
@@ -33381,37 +33387,91 @@ function taskExecutionTimePart(value, fallback){
   var match = String(value||'').match(/(\d{2}:\d{2})(?::\d{2})?$/);
   return match ? match[1] : fallback;
 }
-function taskExecutionRangeParts(value, fallbackWeekday){
+function taskExecutionMonthDayPart(value, fallbackDate){
+  var raw = String(value||'');
+  var full = raw.match(/(?:^|\D)\d{4}[-\/]([01]?\d)[-\/]([0-3]?\d)(?:[T\s]|$)/);
+  var shortDate = raw.match(/(?:^|\s)([01]?\d)[-\/]([0-3]?\d)(?:[T\s]|$)/);
+  var fallback = String(fallbackDate||taskTodayStr()).match(/\d{4}[-\/]([01]?\d)[-\/]([0-3]?\d)/);
+  var month = parseInt(full ? full[1] : (shortDate ? shortDate[1] : (fallback ? fallback[1] : 1)),10);
+  var day = parseInt(full ? full[2] : (shortDate ? shortDate[2] : (fallback ? fallback[2] : 1)),10);
+  if(!(month>=1 && month<=12)) month = 1;
+  if(!(day>=1 && day<=31)) day = 1;
+  return {month:month, day:day};
+}
+function taskExecutionMonthDayValid(month,day){
+  var value = new Date(2024, month-1, day);
+  return value.getMonth()===month-1 && value.getDate()===day;
+}
+function taskExecutionRangeParts(value, fallbackWeekday, fallbackDate){
   var weekday = parseInt(fallbackWeekday,10);
   if(!(weekday>=0 && weekday<=6)) weekday = 0;
   if(value && typeof value==='object'){
     var savedWeekday = parseInt(value.weekday,10);
-    return {start:taskExecutionTimePart(value.start,'08:00'), end:taskExecutionTimePart(value.end,'18:00'), weekday:(savedWeekday>=0 && savedWeekday<=6)?savedWeekday:weekday};
+    var startDateParts = taskExecutionMonthDayPart(value.start, fallbackDate);
+    var endDateParts = taskExecutionMonthDayPart(value.end, fallbackDate);
+    var savedStartMonth = parseInt(value.startMonth,10), savedStartDay = parseInt(value.startDay,10);
+    var savedEndMonth = parseInt(value.endMonth,10), savedEndDay = parseInt(value.endDay,10);
+    return {
+      start:taskExecutionTimePart(value.start,'08:00'),
+      end:taskExecutionTimePart(value.end,'18:00'),
+      weekday:(savedWeekday>=0 && savedWeekday<=6)?savedWeekday:weekday,
+      startMonth:(savedStartMonth>=1 && savedStartMonth<=12)?savedStartMonth:startDateParts.month,
+      startDay:(savedStartDay>=1 && savedStartDay<=31)?savedStartDay:startDateParts.day,
+      endMonth:(savedEndMonth>=1 && savedEndMonth<=12)?savedEndMonth:endDateParts.month,
+      endDay:(savedEndDay>=1 && savedEndDay<=31)?savedEndDay:endDateParts.day
+    };
   }
-  var match = typeof value==='string' ? value.match(/^(?:\d{2}-\d{2}\s+)?(\d{2}:\d{2})\s+至\s+(?:\d{2}-\d{2}\s+)?(\d{2}:\d{2})$/) : null;
-  if(match) return {start:match[1], end:match[2], weekday:weekday};
-  return taskExecutionRangeDefault(weekday);
+  if(typeof value==='string' && value.indexOf('至')>-1){
+    var segments = value.split(/\s*至\s*/);
+    if(segments.length===2){
+      var stringStartParts = taskExecutionMonthDayPart(segments[0], fallbackDate);
+      var stringEndParts = taskExecutionMonthDayPart(segments[1], fallbackDate);
+      return {start:taskExecutionTimePart(segments[0],'08:00'), end:taskExecutionTimePart(segments[1],'18:00'), weekday:weekday,
+        startMonth:stringStartParts.month, startDay:stringStartParts.day, endMonth:stringEndParts.month, endDay:stringEndParts.day};
+    }
+  }
+  return taskExecutionRangeDefault(weekday, fallbackDate);
 }
 function taskExecutionRangeRowHtml(index, values, period){
   var weekday = parseInt(values.weekday,10);
   if(!(weekday>=0 && weekday<=6)) weekday = index%7;
   var weekdayLabels = ['周一','周二','周三','周四','周五','周六','周日'];
   var weekdayOptions = weekdayLabels.map(function(label,value){ return '<option value="'+value+'" '+(value===weekday?'selected':'')+'>'+label+'</option>'; }).join('');
+  function numberOptions(max, selected, suffix){
+    var html = '';
+    for(var number=1;number<=max;number++) html += '<option value="'+number+'" '+(number===selected?'selected':'')+'>'+('0'+number).slice(-2)+suffix+'</option>';
+    return html;
+  }
+  var startMonth = parseInt(values.startMonth,10)||1, startDay = parseInt(values.startDay,10)||1;
+  var endMonth = parseInt(values.endMonth,10)||startMonth, endDay = parseInt(values.endDay,10)||startDay;
+  var startControls = period==='monthly'
+    ? '<select class="task-execution-start-month" aria-label="第'+(index+1)+'次开始月份" style="width:52px;flex:0 0 52px;border:0;background:transparent;padding:8px 2px;font-size:12px;color:#334155;outline:none;">'+numberOptions(12,startMonth,'月')+'</select>'
+      + '<select class="task-execution-start-day" aria-label="第'+(index+1)+'次开始日期" style="width:52px;flex:0 0 52px;border:0;background:transparent;padding:8px 2px;font-size:12px;color:#334155;outline:none;">'+numberOptions(31,startDay,'日')+'</select>'
+      + '<input type="time" class="task-execution-range-start" style="flex:1;min-width:72px;border:0;background:transparent;padding:8px 3px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始时间">'
+    : '<input type="time" class="task-execution-range-start" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始时间">';
+  var endControls = period==='monthly'
+    ? '<select class="task-execution-end-month" aria-label="第'+(index+1)+'次结束月份" style="width:52px;flex:0 0 52px;border:0;background:transparent;padding:8px 2px;font-size:12px;color:#334155;outline:none;">'+numberOptions(12,endMonth,'月')+'</select>'
+      + '<select class="task-execution-end-day" aria-label="第'+(index+1)+'次结束日期" style="width:52px;flex:0 0 52px;border:0;background:transparent;padding:8px 2px;font-size:12px;color:#334155;outline:none;">'+numberOptions(31,endDay,'日')+'</select>'
+      + '<input type="time" class="task-execution-range-end" style="flex:1;min-width:72px;border:0;background:transparent;padding:8px 3px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束时间">'
+    : '<input type="time" class="task-execution-range-end" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束时间">';
   return '<div class="task-execution-range-row" style="display:flex;align-items:center;gap:10px;margin-top:8px;">'
     + '<span style="width:48px;flex:0 0 48px;font-size:13px;color:#475569;text-align:center;">'+(index+1)+'</span>'
     + '<select class="task-execution-weekday" aria-label="第'+(index+1)+'次执行星期" style="width:82px;flex:0 0 82px;height:34px;border:1px solid #d1d5db;border-radius:6px;background:#fff;padding:0 7px;font-size:12px;color:#334155;outline:none;display:'+(period==='weekly'?'block':'none')+';">'+weekdayOptions+'</select>'
-    + '<div style="flex:1;min-width:0;display:flex;align-items:center;border:1px solid #d1d5db;border-radius:6px;background:#fff;overflow:hidden;">'
-    + '<input type="time" class="task-execution-range-start" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始时间">'
+    + '<div style="flex:1;min-width:0;display:flex;align-items:center;border:1px solid #d1d5db;border-radius:6px;background:#fff;overflow-x:auto;">'
+    + '<div style="flex:1;min-width:'+(period==='monthly'?'178px':'0')+';display:flex;align-items:center;">'+startControls+'</div>'
     + '<span style="flex:0 0 auto;padding:0 5px;color:#94a3b8;font-size:12px;">至</span>'
-    + '<input type="time" class="task-execution-range-end" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束时间">'
+    + '<div style="flex:1;min-width:'+(period==='monthly'?'178px':'0')+';display:flex;align-items:center;">'+endControls+'</div>'
     + '</div></div>';
 }
-function taskExecutionRangeDefault(weekday){
+function taskExecutionRangeDefault(weekday, fallbackDate){
   var startValue = (document.getElementById('taskStart')||{}).value || '08:00';
   var endValue = (document.getElementById('taskEnd')||{}).value || '18:00';
   var weekdayValue = parseInt(weekday,10);
   if(!(weekdayValue>=0 && weekdayValue<=6)) weekdayValue = 0;
-  return {start:startValue, end:endValue, weekday:weekdayValue};
+  var dateValue = (document.getElementById('taskStartDate')||{}).value || fallbackDate || taskTodayStr();
+  var dateParts = taskExecutionMonthDayPart(dateValue, dateValue);
+  return {start:startValue, end:endValue, weekday:weekdayValue,
+    startMonth:dateParts.month, startDay:dateParts.day, endMonth:dateParts.month, endDay:dateParts.day};
 }
 function taskBuildExecutionRanges(){
   var countInput = document.getElementById('taskDailyCount');
@@ -33423,13 +33483,18 @@ function taskBuildExecutionRanges(){
     return {
       start:(row.querySelector('.task-execution-range-start')||{}).value || '',
       end:(row.querySelector('.task-execution-range-end')||{}).value || '',
-      weekday:parseInt((row.querySelector('.task-execution-weekday')||{}).value,10)
+      weekday:parseInt((row.querySelector('.task-execution-weekday')||{}).value,10),
+      startMonth:parseInt((row.querySelector('.task-execution-start-month')||{}).value,10),
+      startDay:parseInt((row.querySelector('.task-execution-start-day')||{}).value,10),
+      endMonth:parseInt((row.querySelector('.task-execution-end-month')||{}).value,10),
+      endDay:parseInt((row.querySelector('.task-execution-end-day')||{}).value,10)
     };
   });
   var period = (document.getElementById('taskPeriod')||{}).value || 'daily';
+  var fallbackDate = (document.getElementById('taskStartDate')||{}).value || taskTodayStr();
   var rows = [];
   for(var i=0;i<count;i++){
-    var values = oldValues[i] || taskExecutionRangeDefault(i%7);
+    var values = taskExecutionRangeParts(oldValues[i] || taskExecutionRangeDefault(i%7, fallbackDate), i%7, fallbackDate);
     rows.push(taskExecutionRangeRowHtml(i, values, period));
   }
   container.innerHTML = rows.join('');
@@ -33487,14 +33552,29 @@ function taskConfirmCreate(){
         var rangeStartInput = rangeRows[rangeNo].querySelector('.task-execution-range-start');
         var rangeEndInput = rangeRows[rangeNo].querySelector('.task-execution-range-end');
         var rangeWeekdayInput = rangeRows[rangeNo].querySelector('.task-execution-weekday');
+        var rangeStartMonthInput = rangeRows[rangeNo].querySelector('.task-execution-start-month');
+        var rangeStartDayInput = rangeRows[rangeNo].querySelector('.task-execution-start-day');
+        var rangeEndMonthInput = rangeRows[rangeNo].querySelector('.task-execution-end-month');
+        var rangeEndDayInput = rangeRows[rangeNo].querySelector('.task-execution-end-day');
         var rangeStartValue = rangeStartInput ? rangeStartInput.value : '';
         var rangeEndValue = rangeEndInput ? rangeEndInput.value : '';
         if(!rangeStartValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的开始时间'); if(rangeStartInput) rangeStartInput.focus(); return false; }
         if(!rangeEndValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的结束时间'); if(rangeEndInput) rangeEndInput.focus(); return false; }
-        if(rangeEndValue<=rangeStartValue){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束时间需晚于开始时间'); rangeEndInput.focus(); return false; }
+        var rangeStartMonth = rangeStartMonthInput ? parseInt(rangeStartMonthInput.value,10) : null;
+        var rangeStartDay = rangeStartDayInput ? parseInt(rangeStartDayInput.value,10) : null;
+        var rangeEndMonth = rangeEndMonthInput ? parseInt(rangeEndMonthInput.value,10) : null;
+        var rangeEndDay = rangeEndDayInput ? parseInt(rangeEndDayInput.value,10) : null;
+        if(period==='monthly'){
+          if(!taskExecutionMonthDayValid(rangeStartMonth,rangeStartDay)){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的开始月日无效'); if(rangeStartDayInput) rangeStartDayInput.focus(); return false; }
+          if(!taskExecutionMonthDayValid(rangeEndMonth,rangeEndDay)){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束月日无效'); if(rangeEndDayInput) rangeEndDayInput.focus(); return false; }
+          var rangeStartKey = ('0'+rangeStartMonth).slice(-2)+'-'+('0'+rangeStartDay).slice(-2)+'T'+rangeStartValue;
+          var rangeEndKey = ('0'+rangeEndMonth).slice(-2)+'-'+('0'+rangeEndDay).slice(-2)+'T'+rangeEndValue;
+          if(rangeEndKey<=rangeStartKey){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束月日时间需晚于开始月日时间'); rangeEndInput.focus(); return false; }
+        } else if(rangeEndValue<=rangeStartValue){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束时间需晚于开始时间'); rangeEndInput.focus(); return false; }
         var rangeWeekdayValue = rangeWeekdayInput ? parseInt(rangeWeekdayInput.value,10) : null;
         if(period==='weekly' && !(rangeWeekdayValue>=0 && rangeWeekdayValue<=6)){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的星期'); if(rangeWeekdayInput) rangeWeekdayInput.focus(); return false; }
-        executionRanges2.push({start:rangeStartValue, end:rangeEndValue, weekday:rangeWeekdayValue});
+        executionRanges2.push({start:rangeStartValue, end:rangeEndValue, weekday:rangeWeekdayValue,
+          startMonth:rangeStartMonth, startDay:rangeStartDay, endMonth:rangeEndMonth, endDay:rangeEndDay});
       }
     }
     /* v20.9.100 周期子选项 */
@@ -33508,10 +33588,15 @@ function taskConfirmCreate(){
     var monthDays = Array.prototype.slice.call(document.querySelectorAll('#taskMonthDayOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
     var startDate2 = document.getElementById('taskStartDate').value;
     if(period==='monthly'){
-      monthValues = [1,2,3,4,5,6,7,8,9,10,11,12];
       monthlyMode2 = 'date';
       monthlyWeekDays2 = [];
-      monthDays = [parseInt((startDate2||'').slice(8,10),10)||1];
+      if(countMode==='limited'){
+        monthValues = executionRanges2.map(function(range){ return range.startMonth; }).filter(function(value,index,values){ return values.indexOf(value)===index; }).sort(function(a,b){ return a-b; });
+        monthDays = executionRanges2.map(function(range){ return range.startDay; }).filter(function(value,index,values){ return values.indexOf(value)===index; }).sort(function(a,b){ return a-b; });
+      } else {
+        monthValues = [1,2,3,4,5,6,7,8,9,10,11,12];
+        monthDays = [parseInt((startDate2||'').slice(8,10),10)||1];
+      }
     }
     var endMode2 = document.getElementById('taskEndMode').value;
     var endDate2 = endMode2==='date' ? (document.getElementById('taskEndDate').value||'') : '';
