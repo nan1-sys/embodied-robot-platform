@@ -30563,6 +30563,7 @@ function procClearLocalVideoSelection(){
   if(fileInput) fileInput.value = '';
   if(procPendingLocalVideoUrl){ try{ URL.revokeObjectURL(procPendingLocalVideoUrl); }catch(e){} procPendingLocalVideoUrl=''; }
   procUpdateLocalVideoInfo('', '');
+  if(typeof procVideoReferenceChanged==='function') procVideoReferenceChanged();
 }
 function procOnVideoSelect(select){
   if(select && select.value) procClearLocalVideoSelection();
@@ -36610,26 +36611,59 @@ function procVideoReferenceUrlValid(value){
   } catch(e){ return false; }
 }
 function procVideoReferenceChanged(){
+  var body = document.getElementById('procParamModalBody');
+  var sourceInput = body && body.querySelector('[data-pkey="videoSource"]');
+  var source = sourceInput ? sourceInput.value : 'platform';
   var status = document.getElementById('procVideoRefStatus');
   var previewWrap = document.getElementById('procVideoPreviewWrap');
   var preview = document.getElementById('procVideoPreview');
-  if(status){ status.className='video-ref-status'; status.textContent='填写资源 ID 后可校验；播放地址可用于联调预览'; }
+  if(status){ status.className='video-ref-status'; status.textContent=source==='local' ? '选择本地视频后可预览' : '填写视频地址或资源 ID 后可校验'; }
   if(preview){ try{ preview.pause(); }catch(e){} preview.removeAttribute('src'); }
   if(previewWrap) previewWrap.style.display='none';
+}
+function procVideoSourceChange(source){
+  var body = document.getElementById('procParamModalBody');
+  if(!body) return;
+  var sourceInput = body.querySelector('[data-pkey="videoSource"]');
+  var platformWrap = document.getElementById('procVideoPlatformFields');
+  var localWrap = document.getElementById('procVideoLocalFields');
+  if(sourceInput) sourceInput.value = source;
+  if(platformWrap) platformWrap.style.display = source==='platform' ? 'block' : 'none';
+  if(localWrap) localWrap.style.display = source==='local' ? 'block' : 'none';
+  Array.prototype.slice.call(body.querySelectorAll('.video-source-option')).forEach(function(option){
+    option.classList.toggle('selected', option.getAttribute('data-source')===source);
+  });
+  procVideoReferenceChanged();
 }
 function procCheckVideoReference(showPreview){
   var body = document.getElementById('procParamModalBody');
   if(!body) return;
+  var sourceInput = body.querySelector('[data-pkey="videoSource"]');
+  var source = sourceInput ? sourceInput.value : 'platform';
   var idInput = body.querySelector('[data-pkey="videoResourceId"]');
   var urlInput = body.querySelector('[data-pkey="videoUrl"]');
+  var localNameInput = body.querySelector('[data-pkey="localVideoName"]');
   var resourceId = idInput ? (idInput.value||'').trim() : '';
   var videoUrl = urlInput ? (urlInput.value||'').trim() : '';
   var status = document.getElementById('procVideoRefStatus');
   var previewWrap = document.getElementById('procVideoPreviewWrap');
   var preview = document.getElementById('procVideoPreview');
-  if(!resourceId){
-    if(status){ status.className='video-ref-status error'; status.textContent='请先填写视频资源 ID'; }
-    if(idInput) idInput.focus();
+  if(source==='local'){
+    var localName = localNameInput ? (localNameInput.value||'').trim() : '';
+    if(!localName){
+      if(status){ status.className='video-ref-status error'; status.textContent='请先选择本地视频文件'; }
+      return;
+    }
+    if(status){ status.className='video-ref-status success'; status.textContent='已选择本地视频：'+localName; }
+    if(showPreview){
+      if(!procPendingLocalVideoUrl){ showToast('已保存的本地文件需重新选择后才能预览'); return; }
+      if(preview && previewWrap){ preview.src=procPendingLocalVideoUrl; previewWrap.style.display='block'; preview.load(); }
+    }
+    return;
+  }
+  if(!resourceId && !videoUrl){
+    if(status){ status.className='video-ref-status error'; status.textContent='请填写视频中台地址或视频资源 ID'; }
+    if(urlInput) urlInput.focus();
     return;
   }
   if(videoUrl && !procVideoReferenceUrlValid(videoUrl)){
@@ -36656,20 +36690,34 @@ function procRenderVideoReferenceParamModal(rowData,meta){
   var videoName = p.videoName || (legacyVideo && legacyVideo.name) || p.localVideoName || '';
   var legacyUrl = (legacyVideo && legacyVideo.previewUrl && String(legacyVideo.previewUrl).indexOf('blob:')!==0) ? legacyVideo.previewUrl : '';
   var videoUrl = p.videoUrl || legacyUrl || '';
+  var localVideoName = p.localVideoName || '';
+  var localVideoSize = p.localVideoSize || '';
+  var localVideoType = p.localVideoType || '';
+  var source = (p.videoSource==='local' || localVideoName) ? 'local' : 'platform';
   var wait = p.waitForCompletion!==undefined ? p.waitForCompletion : true;
+  var localVideoInfo = localVideoName
+    ? '<span>🎬</span><span class="proc-audio-upload-name" title="'+paEscapeAttr(localVideoName)+'">'+esc(localVideoName)+'</span>'+(localVideoSize?'<span style="flex:none;color:#94a3b8;">'+esc(localVideoSize)+'</span>':'')+'<button type="button" class="proc-audio-upload-remove" onclick="procClearLocalVideoSelection()" title="移除本地视频">×</button>'
+    : '<span>未选择文件</span>';
   var body = ''
-    + '<div class="video-ref-tip">视频文件由视频中台统一存储。本平台仅保存视频资源 ID；播放地址可留空，并在任务执行时通过视频中台接口动态获取。</div>'
-    + '<div class="video-ref-field"><label class="required">视频资源 ID</label><input type="text" data-pkey="videoResourceId" value="'+paEscapeAttr(legacyId)+'" maxlength="120" autocomplete="off" oninput="procVideoReferenceChanged()" placeholder="请输入视频中台的资源 ID"><div class="video-ref-help">使用稳定的资源标识，请勿填写带 Token 或有效期的临时地址。</div></div>'
-    + '<div class="video-ref-field"><label>视频名称</label><input type="text" data-pkey="videoName" value="'+paEscapeAttr(videoName)+'" maxlength="80" autocomplete="off" placeholder="可选，用于界面识别"></div>'
-    + '<div class="video-ref-field"><label>播放地址（可选）</label><input type="url" data-pkey="videoUrl" value="'+paEscapeAttr(videoUrl)+'" autocomplete="off" oninput="procVideoReferenceChanged()" placeholder="https://video.example.com/path/video.mp4"><div class="video-ref-help">用于当前联调和预览，支持 HTTP/HTTPS 的 MP4、HLS（m3u8）或视频中台播放接口。</div></div>'
-    + '<div class="video-ref-actions"><div id="procVideoRefStatus" class="video-ref-status">填写资源 ID 后可校验；播放地址可用于联调预览</div><button type="button" class="video-ref-action" onclick="procCheckVideoReference(false)">校验信息</button><button type="button" class="video-ref-action primary" onclick="procCheckVideoReference(true)">预览播放</button></div>'
+    + '<div class="video-ref-tip">支持直接填写视频中台的存储或播放地址，也可以临时上传本地视频。平台只保存当前动作所需的引用信息，不建立独立视频库。</div>'
+    + '<div class="video-source-label">视频来源</div><div class="video-source-options">'
+    + '<label class="video-source-option '+(source==='platform'?'selected':'')+'" data-source="platform"><input type="radio" name="procVideoSource" value="platform" '+(source==='platform'?'checked':'')+' onchange="procVideoSourceChange(\'platform\')"><span><strong>视频中台地址</strong><small>填写存储地址、播放地址或资源 ID</small></span></label>'
+    + '<label class="video-source-option '+(source==='local'?'selected':'')+'" data-source="local"><input type="radio" name="procVideoSource" value="local" '+(source==='local'?'checked':'')+' onchange="procVideoSourceChange(\'local\')"><span><strong>本地上传</strong><small>从当前电脑选择视频文件</small></span></label></div>'
+    + '<input type="hidden" data-pkey="videoSource" value="'+source+'">'
+    + '<div id="procVideoPlatformFields" style="display:'+(source==='platform'?'block':'none')+';">'
+    + '<div class="video-ref-field"><label>视频地址</label><input type="url" data-pkey="videoUrl" value="'+paEscapeAttr(videoUrl)+'" autocomplete="off" oninput="procVideoReferenceChanged()" placeholder="https://video.example.com/path/video.mp4"><div class="video-ref-help">支持 HTTP/HTTPS 的 MP4、HLS（m3u8）或视频中台播放接口；若只提供资源 ID，此项可留空。</div></div>'
+    + '<div class="video-ref-field"><label>视频资源 ID（可选）</label><input type="text" data-pkey="videoResourceId" value="'+paEscapeAttr(legacyId)+'" maxlength="120" autocomplete="off" oninput="procVideoReferenceChanged()" placeholder="请输入视频中台的资源 ID"><div class="video-ref-help">如视频中台支持按 ID 动态解析地址，建议同时保存稳定的资源标识。</div></div>'
+    + '<div class="video-ref-field"><label>视频名称</label><input type="text" data-pkey="videoName" value="'+paEscapeAttr(videoName)+'" maxlength="80" autocomplete="off" placeholder="可选，用于界面识别"></div></div>'
+    + '<div id="procVideoLocalFields" style="display:'+(source==='local'?'block':'none')+';">'
+    + '<div class="proc-audio-upload-wrap"><div class="proc-audio-upload-control"><input type="file" id="procLocalVideoFile" accept=".mp4,.mov,.avi,.mkv,.webm,video/*" style="display:none" onchange="procOnLocalVideoSelected(this);procVideoReferenceChanged()"><input type="hidden" data-pkey="localVideoName" value="'+paEscapeAttr(localVideoName)+'"><input type="hidden" data-pkey="localVideoSize" value="'+paEscapeAttr(localVideoSize)+'"><input type="hidden" data-pkey="localVideoType" value="'+paEscapeAttr(localVideoType)+'"><button type="button" class="proc-audio-upload-btn" onclick="document.getElementById(\'procLocalVideoFile\').click()">选择本地视频</button><div id="procLocalVideoInfo" class="proc-audio-upload-info'+(localVideoName?' has-file':'')+'">'+localVideoInfo+'</div></div><div class="proc-audio-upload-tip">支持 MP4、MOV、AVI、MKV、WEBM；正式环境上传后应由后端返回可长期使用的视频地址或资源 ID。</div></div></div>'
+    + '<div class="video-ref-actions"><div id="procVideoRefStatus" class="video-ref-status">'+(source==='local'?'选择本地视频后可预览':'填写视频地址或资源 ID 后可校验')+'</div><button type="button" class="video-ref-action" onclick="procCheckVideoReference(false)">校验信息</button><button type="button" class="video-ref-action primary" onclick="procCheckVideoReference(true)">预览播放</button></div>'
     + '<div id="procVideoPreviewWrap" class="video-ref-preview"><video id="procVideoPreview" controls preload="metadata"></video></div>'
     + '<div class="video-ref-wait"><span>等待完成：</span><label class="proc-param-switch"><input type="checkbox" data-pkey="waitForCompletion" '+(wait?'checked':'')+'><span class="proc-param-switch-slider"></span></label><span style="color:#94a3b8;font-size:11px;">开启后等待视频播放结束再执行下一动作</span></div>';
   var ov2 = document.getElementById('overlayView2');
   if(!ov2){ ov2=document.createElement('div'); ov2.id='overlayView2'; document.body.appendChild(ov2); }
   ov2.style.display='flex';
   ov2.innerHTML='<div class="proc-param-modal-overlay" onclick="if(event.target===this)procCloseActionParamModal()"><div class="proc-param-modal-box video-ref-modal" onclick="event.stopPropagation()"><div class="proc-param-modal-head"><h4>配置参数 - '+esc(meta.label)+'</h4><button onclick="procCloseActionParamModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;line-height:1;">&times;</button></div><div class="proc-param-modal-body" id="procParamModalBody">'+body+'</div><div class="proc-param-modal-foot"><button class="btn-cancel" onclick="procCloseActionParamModal()">取消</button><button class="btn-save" onclick="procSaveActionParamModal()">保存</button></div></div></div>';
-  setTimeout(function(){ var input=document.querySelector('#procParamModalBody [data-pkey="videoResourceId"]'); if(input) input.focus(); },50);
+  setTimeout(function(){ var input=document.querySelector(source==='local'?'#procLocalVideoFile':'#procParamModalBody [data-pkey="videoUrl"]'); if(input) input.focus(); },50);
 }
 function procSaveActionParamModal(){
   if(procPointActionEditRowIdx === null || procPointActionEditRowIdx === undefined) return;
@@ -36710,13 +36758,25 @@ function procSaveActionParamModal(){
     }
   }
   if(procPointActionEditRows[idx].key === 'play_video'){
+    newParams.videoSource = newParams.videoSource==='local' ? 'local' : 'platform';
     newParams.videoResourceId = (newParams.videoResourceId||'').trim();
     newParams.videoName = (newParams.videoName||'').trim();
     newParams.videoUrl = (newParams.videoUrl||'').trim();
-    if(!newParams.videoResourceId){ showToast('⚠️ 请填写视频资源 ID'); return; }
-    if(newParams.videoUrl && !procVideoReferenceUrlValid(newParams.videoUrl)){
-      showToast('⚠️ 播放地址格式不正确，仅支持 HTTP 或 HTTPS');
-      return;
+    newParams.localVideoName = (newParams.localVideoName||'').trim();
+    if(newParams.videoSource==='local'){
+      if(!newParams.localVideoName){ showToast('⚠️ 请选择本地视频文件'); return; }
+      newParams.videoResourceId = '';
+      newParams.videoName = '';
+      newParams.videoUrl = '';
+    } else {
+      if(!newParams.videoUrl && !newParams.videoResourceId){ showToast('⚠️ 请填写视频中台地址或视频资源 ID'); return; }
+      if(newParams.videoUrl && !procVideoReferenceUrlValid(newParams.videoUrl)){
+        showToast('⚠️ 视频地址格式不正确，仅支持 HTTP 或 HTTPS');
+        return;
+      }
+      newParams.localVideoName = '';
+      newParams.localVideoSize = '';
+      newParams.localVideoType = '';
     }
   }
   if(procPointActionEditRows[idx].key === 'play_text'){
@@ -36762,6 +36822,7 @@ function procSaveActionParamModal(){
 function procCloseActionParamModal(){
   var preview = document.getElementById('procVideoPreview');
   if(preview){ try{ preview.pause(); }catch(e){} preview.removeAttribute('src'); }
+  if(procPendingLocalVideoUrl){ try{ URL.revokeObjectURL(procPendingLocalVideoUrl); }catch(e){} procPendingLocalVideoUrl=''; }
   var ov2 = document.getElementById('overlayView2'); if(ov2) ov2.style.display='none';
   procPointActionEditRowIdx = null;
 }
