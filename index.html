@@ -36593,6 +36593,75 @@ function procRenderPtzPoseParamModal(rowData,meta){
   ov2.innerHTML='<div class="proc-param-modal-overlay" onclick="if(event.target===this)procCloseActionParamModal()"><div class="proc-param-modal-box ptz-pose-modal" onclick="event.stopPropagation()"><div class="proc-param-modal-head"><h4>配置参数 - '+esc(meta.label)+'</h4><button onclick="procCloseActionParamModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;line-height:1;">&times;</button></div><div class="proc-param-modal-body" id="procParamModalBody">'+body+'</div><div class="proc-param-modal-foot"><button class="btn-cancel" onclick="procCloseActionParamModal()">取消</button><button class="btn-save" onclick="procSaveActionParamModal()">保存动作配置</button></div></div></div>';
   setTimeout(function(){ var el=document.getElementById('ptzPoseName'); if(el) el.focus(); },50);
 }
+function procVideoReferenceUrlValid(value){
+  if(!value) return true;
+  try {
+    var parsed = new URL(value);
+    return parsed.protocol==='https:' || parsed.protocol==='http:';
+  } catch(e){ return false; }
+}
+function procVideoReferenceChanged(){
+  var status = document.getElementById('procVideoRefStatus');
+  var previewWrap = document.getElementById('procVideoPreviewWrap');
+  var preview = document.getElementById('procVideoPreview');
+  if(status){ status.className='video-ref-status'; status.textContent='填写资源 ID 后可校验；播放地址可用于联调预览'; }
+  if(preview){ try{ preview.pause(); }catch(e){} preview.removeAttribute('src'); }
+  if(previewWrap) previewWrap.style.display='none';
+}
+function procCheckVideoReference(showPreview){
+  var body = document.getElementById('procParamModalBody');
+  if(!body) return;
+  var idInput = body.querySelector('[data-pkey="videoResourceId"]');
+  var urlInput = body.querySelector('[data-pkey="videoUrl"]');
+  var resourceId = idInput ? (idInput.value||'').trim() : '';
+  var videoUrl = urlInput ? (urlInput.value||'').trim() : '';
+  var status = document.getElementById('procVideoRefStatus');
+  var previewWrap = document.getElementById('procVideoPreviewWrap');
+  var preview = document.getElementById('procVideoPreview');
+  if(!resourceId){
+    if(status){ status.className='video-ref-status error'; status.textContent='请先填写视频资源 ID'; }
+    if(idInput) idInput.focus();
+    return;
+  }
+  if(videoUrl && !procVideoReferenceUrlValid(videoUrl)){
+    if(status){ status.className='video-ref-status error'; status.textContent='播放地址格式不正确，仅支持 HTTP 或 HTTPS'; }
+    if(urlInput) urlInput.focus();
+    return;
+  }
+  if(!videoUrl){
+    if(status){ status.className='video-ref-status success'; status.textContent='资源 ID 已填写；实际播放地址将在执行时由视频中台解析'; }
+    if(showPreview) showToast('请先填写可访问的播放地址后再预览');
+    return;
+  }
+  if(status){ status.className='video-ref-status success'; status.textContent='资源 ID 与播放地址格式校验通过'; }
+  if(showPreview && preview && previewWrap){
+    preview.src = videoUrl;
+    previewWrap.style.display='block';
+    preview.load();
+  }
+}
+function procRenderVideoReferenceParamModal(rowData,meta){
+  var p = rowData.params || {};
+  var legacyId = p.videoResourceId || p.videoId || p.mediaVideoId || '';
+  var legacyVideo = legacyId && typeof contentVideoList!=='undefined' ? (contentVideoList||[]).filter(function(item){ return item.id===legacyId; })[0] : null;
+  var videoName = p.videoName || (legacyVideo && legacyVideo.name) || p.localVideoName || '';
+  var legacyUrl = (legacyVideo && legacyVideo.previewUrl && String(legacyVideo.previewUrl).indexOf('blob:')!==0) ? legacyVideo.previewUrl : '';
+  var videoUrl = p.videoUrl || legacyUrl || '';
+  var wait = p.waitForCompletion!==undefined ? p.waitForCompletion : true;
+  var body = ''
+    + '<div class="video-ref-tip">视频文件由视频中台统一存储。本平台仅保存视频资源 ID；播放地址可留空，并在任务执行时通过视频中台接口动态获取。</div>'
+    + '<div class="video-ref-field"><label class="required">视频资源 ID</label><input type="text" data-pkey="videoResourceId" value="'+paEscapeAttr(legacyId)+'" maxlength="120" autocomplete="off" oninput="procVideoReferenceChanged()" placeholder="请输入视频中台的资源 ID"><div class="video-ref-help">使用稳定的资源标识，请勿填写带 Token 或有效期的临时地址。</div></div>'
+    + '<div class="video-ref-field"><label>视频名称</label><input type="text" data-pkey="videoName" value="'+paEscapeAttr(videoName)+'" maxlength="80" autocomplete="off" placeholder="可选，用于界面识别"></div>'
+    + '<div class="video-ref-field"><label>播放地址（可选）</label><input type="url" data-pkey="videoUrl" value="'+paEscapeAttr(videoUrl)+'" autocomplete="off" oninput="procVideoReferenceChanged()" placeholder="https://video.example.com/path/video.mp4"><div class="video-ref-help">用于当前联调和预览，支持 HTTP/HTTPS 的 MP4、HLS（m3u8）或视频中台播放接口。</div></div>'
+    + '<div class="video-ref-actions"><div id="procVideoRefStatus" class="video-ref-status">填写资源 ID 后可校验；播放地址可用于联调预览</div><button type="button" class="video-ref-action" onclick="procCheckVideoReference(false)">校验信息</button><button type="button" class="video-ref-action primary" onclick="procCheckVideoReference(true)">预览播放</button></div>'
+    + '<div id="procVideoPreviewWrap" class="video-ref-preview"><video id="procVideoPreview" controls preload="metadata"></video></div>'
+    + '<div class="video-ref-wait"><span>等待完成：</span><label class="proc-param-switch"><input type="checkbox" data-pkey="waitForCompletion" '+(wait?'checked':'')+'><span class="proc-param-switch-slider"></span></label><span style="color:#94a3b8;font-size:11px;">开启后等待视频播放结束再执行下一动作</span></div>';
+  var ov2 = document.getElementById('overlayView2');
+  if(!ov2){ ov2=document.createElement('div'); ov2.id='overlayView2'; document.body.appendChild(ov2); }
+  ov2.style.display='flex';
+  ov2.innerHTML='<div class="proc-param-modal-overlay" onclick="if(event.target===this)procCloseActionParamModal()"><div class="proc-param-modal-box video-ref-modal" onclick="event.stopPropagation()"><div class="proc-param-modal-head"><h4>配置参数 - '+esc(meta.label)+'</h4><button onclick="procCloseActionParamModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;line-height:1;">&times;</button></div><div class="proc-param-modal-body" id="procParamModalBody">'+body+'</div><div class="proc-param-modal-foot"><button class="btn-cancel" onclick="procCloseActionParamModal()">取消</button><button class="btn-save" onclick="procSaveActionParamModal()">保存</button></div></div></div>';
+  setTimeout(function(){ var input=document.querySelector('#procParamModalBody [data-pkey="videoResourceId"]'); if(input) input.focus(); },50);
+}
 function procSaveActionParamModal(){
   if(procPointActionEditRowIdx === null || procPointActionEditRowIdx === undefined) return;
   var idx = procPointActionEditRowIdx;
