@@ -4095,9 +4095,7 @@ bdeploy-model-group { margin-bottom:8px; }
               <div class="admin-menu-desc" style="display:none"></div>
               <div class="admin-sub-list">
                 <div class="admin-sub-item" data-admin-sub="content-audio" onclick="switchAdminMenu('content','content-audio',event)">音频管理</div>
-                <div class="admin-sub-item" data-admin-sub="content-video" onclick="switchAdminMenu('content','content-video',event)">视频管理</div>
                 <div class="admin-sub-item" data-admin-sub="content-entry" onclick="switchAdminMenu('content','content-entry',event)">词条管理</div>
-                <div class="admin-sub-item" data-admin-sub="content-delivery" onclick="switchAdminMenu('content','content-delivery',event)">媒体投放</div>
               </div>
             </div>
             <div class="admin-menu-group" data-admin-menu="system">
@@ -4105,7 +4103,7 @@ bdeploy-model-group { margin-bottom:8px; }
               <div class="admin-menu-desc" style="display:none"></div>
               <div class="admin-sub-list">
                 <div class="admin-sub-item" data-admin-sub="robot-params" onclick="switchAdminMenu('system','robot-params',event)">机器人参数</div>
-                <div class="admin-sub-item" data-admin-sub="payload-capability" onclick="switchAdminMenu('system','payload-capability',event)">上装能力</div>
+                <div class="admin-sub-item" data-admin-sub="payload-capability" onclick="switchAdminMenu('system','payload-capability',event)">上装能力（暂不实现）</div>
               </div>
             </div>
             <div class="admin-menu-group" data-admin-menu="history">
@@ -25782,7 +25780,7 @@ function renderCockpitUpperPanel(robot){
   var html = '<div class="ck-right-card ck-upper-select">';
   html += '<div class="ck-section-title">上装设备</div>';
   if(list.length === 0){
-    html += '<div class="ck-upper-empty">当前机器人暂无上装设备<br><span style="font-size:12px;color:#64748b;">装配关系由 AIoT 管理，可同步后在「系统配置 → 上装能力」查看</span><br><button class="ck-go-mount" onclick="goToPayloadManage()">查看上装能力</button></div>';
+    html += '<div class="ck-upper-empty">当前机器人暂无上装设备<br><span style="font-size:12px;color:#64748b;">装配关系由 AIoT 管理，可同步后在「系统配置 → 上装能力（暂不实现）」查看</span><br><button class="ck-go-mount" onclick="goToPayloadManage()">查看上装能力</button></div>';
   } else {
     html += '<div class="ck-upper-cards">';
     list.forEach(function(d){
@@ -26416,16 +26414,14 @@ const ADMIN_MENU_META = {
     name:'媒体管理',
     subs:{
       'content-audio':{ name:'音频管理', desc:'管理任务执行中可播放的音频文件，支持在线试听与直接下发给机器人。', panel:'', actions:[] },
-      'content-video':{ name:'视频管理', desc:'管理任务执行中可播放或调用的视频文件，支持按节点分发与引用。', panel:'', actions:[] },
-      'content-entry':{ name:'词条管理', desc:'管理机器人语音交互与播报所需的词条文本，支持批量下发给机器人。', panel:'', actions:[] },
-      'content-delivery':{ name:'媒体投放', desc:'引用媒体管理中的视频、音频和词条，按时间、路线和机器人创建投放计划。', panel:'', actions:[] }
+      'content-entry':{ name:'词条管理', desc:'管理机器人语音交互与播报所需的词条文本，支持批量下发给机器人。', panel:'', actions:[] }
     }
   },
   system: {
     name:'系统配置',
     subs:{
       'robot-params':{ name:'机器人参数', desc:'按设备类型配置机器人具备的能力与属性（如可下蹲、可呼叫、可查看视频等），不同类型的设备功能不同。', panel:'', actions:[] },
-      'payload-capability':{ name:'上装能力', desc:'查看由 AIoT 同步的机器人上装设备、装配关系、运行状态和可用能力，并进行临时业务控制。', panel:'', actions:[] }
+      'payload-capability':{ name:'上装能力（暂不实现）', desc:'查看由 AIoT 同步的机器人上装设备、装配关系、运行状态和可用能力，并进行临时业务控制。', panel:'', actions:[] }
     }
   },
   history: {
@@ -26852,17 +26848,17 @@ function renderRobotParamList(){
       var cnt = (t.features||[]).length;
       var onCnt = (t.features||[]).filter(function(f){ return f.enabled; }).length;
       return '<tr>'
-        + '<td><div class="rp-table-name"><span class="rp-table-icon"><img class="rp-icon-img" src="'+t.img+'" alt="'+esc(t.name)+'"></span>'+esc(t.typeName)+'</div></td>'
+        + '<td><div class="pd-device-name"><span class="pd-icon-sm"><img src="'+t.img+'" alt="'+esc(t.name)+'"></span>'+esc(t.typeName)+'</div></td>'
         + '<td>'+esc(t.manufacturer)+'</td>'
         + '<td>'+esc(t.form)+'</td>'
         + '<td>'+cnt+' 项</td>'
         + '<td>'+onCnt+' / '+cnt+'</td>'
-        + '<td style="white-space:nowrap;"><span class="rp-table-link" onclick="rpEnterDetail(\''+t.id+'\')">配置能力</span></td>'
+        + '<td style="white-space:nowrap;"><span class="admin-link" onclick="rpEnterDetail(\''+t.id+'\')">配置能力</span></td>'
         + '</tr>';
     }).join('');
-    contentHtml = '<div class="rp-table-card"><table><thead><tr><th>型号名称</th><th>制造商</th><th>形态</th><th>功能总数</th><th>已启用</th><th style="width:100px">操作</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    contentHtml = '<table class="admin-data-table"><thead><tr><th>型号名称</th><th>制造商</th><th>形态</th><th>功能总数</th><th>已启用</th><th style="width:100px">操作</th></tr></thead><tbody>'+rows+'</tbody></table>';
   } else {
-    contentHtml = '<div class="rp-card-grid">' + list.map(function(t){
+    contentHtml = '<div style="padding:16px 18px"><div class="rp-card-grid">' + list.map(function(t){
       var cnt = (t.features||[]).length;
       var onCnt = (t.features||[]).filter(function(f){ return f.enabled; }).length;
       return '<div class="rp-card" onclick="rpEnterDetail(\''+t.id+'\')">'
@@ -26871,28 +26867,25 @@ function renderRobotParamList(){
         + '<div class="rp-card-desc">'+esc(t.desc)+'</div>'
         + '<div class="rp-card-footer"><span>'+onCnt+' / '+cnt+' 已启用</span><span class="rp-card-enter">配置能力 →</span></div>'
         + '</div>';
-    }).join('') + '</div>';
+    }).join('') + '</div></div>';
   }
 
+  var filterCard = '<div class="admin-filter-card"><div class="admin-filter-row">'
+    + '<div class="admin-filter-item"><label>关键词</label><input type="text" id="rpFilterKeyword" placeholder="请输入型号、制造商或形态关键字" value="'+esc(robotParamState.keyword)+'" onkeydown="if(event.key===\'Enter\')rpFilterList()"></div>'
+    + '<div class="admin-filter-btns"><button class="admin-filter-btn primary" onclick="rpFilterList()">搜索</button><button class="admin-filter-btn default" onclick="rpResetListFilter()">重置</button></div>'
+    + '</div></div>';
+  var toolbar = '<div class="admin-table-toolbar">'
+    + '<div class="admin-table-title">机器人型号（共 '+list.length+' 条）</div>'
+    + '<div class="admin-table-actions"><div class="view-toggle-group">'
+    + '<button class="view-toggle-btn'+(view==='grid'?' active':'')+'" onclick="rpSetListView(\'grid\')">▦ 卡片</button>'
+    + '<button class="view-toggle-btn'+(view==='list'?' active':'')+'" onclick="rpSetListView(\'list\')">≣ 列表</button>'
+    + '</div></div></div>';
+  var pagination = '<div class="calib-pagination"><span class="pg-info">共 '+list.length+' 条，第 1 / 1 页</span>'
+    + '<button class="pg-btn" disabled>首页</button><button class="pg-btn" disabled>上一页</button><span class="pg-num">1</span><button class="pg-btn" disabled>下一页</button><button class="pg-btn" disabled>末页</button></div>';
   return ''
     + '<div class="rp-page">'
-      + '<div class="rp-header">'
-        + '<div class="rp-header-title">🤖 机器人参数配置</div>'
-        + '<div class="rp-header-actions">'
-          + '<div class="rp-view-toggle">'
-            + '<button class="'+(view==='grid'?'active':'')+'" onclick="rpSetListView(\'grid\')" title="卡片视图">▦ 卡片</button>'
-            + '<button class="'+(view==='list'?'active':'')+'" onclick="rpSetListView(\'list\')" title="列表视图">☰ 列表</button>'
-          + '</div>'
-          + '<button class="admin-tool-btn default" onclick="rpResetDefaults()">↺ 重置默认</button>'
-          + '<button class="admin-tool-btn primary" onclick="rpSaveParams()">💾 保存配置</button>'
-        + '</div>'
-      + '</div>'
-      + '<div class="rp-filter-row">'
-        + '<input type="text" class="rp-search-box" id="rpFilterKeyword" placeholder="搜索型号 / 制造商 / 形态" value="'+esc(robotParamState.keyword)+'" onkeydown="if(event.key===\'Enter\')rpFilterList()">'
-        + '<button class="admin-filter-btn primary" onclick="rpFilterList()">搜索</button>'
-        + '<button class="admin-filter-btn default" onclick="rpResetListFilter()">重置</button>'
-      + '</div>'
-      + '<div style="flex:1;min-height:0;overflow:auto;">'+contentHtml+'</div>'
+      + filterCard
+      + '<div class="admin-table-card">'+toolbar+contentHtml+pagination+'</div>'
     + '</div>';
 }
 
@@ -27739,9 +27732,7 @@ function getAdminDetailHtml(menuKey, subKey){
   }
   if(menuKey === 'content'){
     if(subKey === 'content-audio') return renderContentAudio();
-    if(subKey === 'content-video') return renderContentVideo();
     if(subKey === 'content-entry') return renderContentEntry();
-    if(subKey === 'content-delivery') return renderMediaDelivery();
     return '';
   }
   if(menuKey === 'history'){
@@ -28210,9 +28201,6 @@ function renderPointSchemeList(){
         + '</div>';
     }).join('') + '</div></div>';
   }
-  /* v20.9.101 对齐任务编排布局：描述文字 + 搜索栏 + 标题栏(含计数+按钮组) + 内容 + 分页 */
-  var descText = '<div style="font-size:13px;color:#64748b;margin-bottom:12px;padding:0 2px;">统一维护充电桩、兴趣点、特殊点、传送点等业务点位方案，用于路径编排和任务编排引用。</div>';
-
   var filterCard = '<div class="admin-filter-card"><div class="admin-filter-row">'
     + '<div class="admin-filter-item"><label>方案名称</label><input type="text" id="pmFilterKeyword" placeholder="请输入方案名称关键字" value="'+esc(pmState.keyword)+'" onkeydown="if(event.key===\'Enter\')filterPointManage()"></div>'
     + '<div class="admin-filter-btns"><button class="admin-filter-btn primary" onclick="filterPointManage()">搜索</button><button class="admin-filter-btn default" onclick="resetPointManageFilter()">重置</button></div>'
@@ -28226,7 +28214,7 @@ function renderPointSchemeList(){
     + '</div></div>';
 
   var pg = renderPmSchemePagination(total, page, totalPages);
-  return descText + filterCard + '<div class="admin-table-card">' + toolbar + listHtml + pg + '</div>';
+  return filterCard + '<div class="admin-table-card">' + toolbar + listHtml + pg + '</div>';
 }
 
 function filterPointManage(){
@@ -29757,7 +29745,6 @@ function renderPathSchemeList(){
         + '</div>';
     }).join('') + '</div></div>';
   }
-  var descText = '<div style="font-size:13px;color:#64748b;margin-bottom:12px;padding:0 2px;">基于点位方案编排巡检路径，串联点位形成可下发的路线，并支持路径内单点动作配置。</div>';
   var filterCard = '<div class="admin-filter-card"><div class="admin-filter-row">'
     + '<div class="admin-filter-item"><label>路径名称</label><input type="text" id="paFilterKeyword" placeholder="请输入路径名称关键字" value="'+esc(paState.keyword)+'" onkeydown="if(event.key===\'Enter\')filterPathArrange()"></div>'
     + '<div class="admin-filter-btns"><button class="admin-filter-btn primary" onclick="filterPathArrange()">搜索</button><button class="admin-filter-btn default" onclick="resetPathArrangeFilter()">重置</button></div>'
@@ -29769,7 +29756,7 @@ function renderPathSchemeList(){
     + '<button class="admin-tool-btn primary" '+(canCreate?'onclick="paOpenCreateSchemeModal()"':'disabled style="opacity:.5;cursor:not-allowed;"')+'>＋ 新建路径</button>'
     + '</div></div>';
   var pg = renderPaSchemePagination(total, page, totalPages);
-  return descText + filterCard + '<div class="admin-table-card">' + toolbar + listHtml + pg + '</div>';
+  return filterCard + '<div class="admin-table-card">' + toolbar + listHtml + pg + '</div>';
 }
 
 /* v20.9.109 路径编排分页（与点位管理一致） */
@@ -30842,7 +30829,6 @@ function renderProcessList(){
         + '</div>';
     }).join('') + '</div></div>';
   }
-  var descText = '<div style="font-size:13px;color:#64748b;margin-bottom:12px;padding:0 2px;">基于路径绑定设备型号并配置点位动作，形成可下发的作业流程，支持多设备型号并行调度。</div>';
   var filterCard = '<div class="admin-filter-card"><div class="admin-filter-row">'
     + '<div class="admin-filter-item"><label>流程名称</label><input type="text" id="procFilterKeyword" placeholder="请输入流程/路径/型号关键字" value="'+esc(procState.keyword)+'" onkeydown="if(event.key===\'Enter\')filterProcessArrange()"></div>'
     + '<div class="admin-filter-btns"><button class="admin-filter-btn primary" onclick="filterProcessArrange()">搜索</button><button class="admin-filter-btn default" onclick="resetProcessArrangeFilter()">重置</button></div>'
@@ -30854,7 +30840,7 @@ function renderProcessList(){
     + '<button class="admin-tool-btn primary" '+(canCreate?'onclick="procOpenCreateModal()"':'disabled style="opacity:.5;cursor:not-allowed;"')+'>＋ 新建流程</button>'
     + '</div></div>';
   var pg = renderProcSchemePagination(total, page, totalPages);
-  return descText + filterCard + '<div class="admin-table-card">' + toolbar + listHtml + pg + '</div>';
+  return filterCard + '<div class="admin-table-card">' + toolbar + listHtml + pg + '</div>';
 }
 
 /* v20.9.109 流程编排分页（与点位管理一致） */
@@ -32899,11 +32885,13 @@ function taskPlanSummary(p){
       if(monthPrefix || dateText!=='每天') s += '('+monthPrefix+(dateText||'未选择日期')+')';
     }
   }
-  s += ' '+(p.startTime||'')+'-'+(p.endTime||'');
+  if(!(p.countMode==='limited' && Array.isArray(p.executionRanges) && p.executionRanges.length)){
+    s += ' '+(p.startTime||'')+'-'+(p.endTime||'');
+  }
   s += ' · '+((p.endMode==='date' && p.endDate) ? ('至 '+p.endDate) : '长期执行');
-  /* v20.9.100 执行次数 */
+  /* 限次任务按实际配置的总次数展示 */
   if(p.countMode==='limited' && p.dailyCount){
-    s += ' · 每日'+p.dailyCount+'次';
+    s += ' · 共'+p.dailyCount+'次';
   } else {
     s += ' · 不限次';
   }
@@ -32960,9 +32948,7 @@ function renderTaskArrange(){
         + '<td>'+taskTypeText(p)+'</td>'
         + '<td>'+taskPlanSummary(p)+'</td>'
         + '<td><div class="task-list-actions">'
-        +   (p.status==='dispatched'
-              ? '<button class="task-list-action revoke" onclick="confirmRevokeDispatchPlan(\''+p.id+'\')">撤销下发</button>'
-              : '<button class="task-list-action dispatch" onclick="taskDispatchPlan(\''+p.id+'\')">下发</button>')
+        +   '<button class="task-list-action dispatch" onclick="taskDispatchPlan(\''+p.id+'\')">下发</button>'
         +   '<button class="task-list-action run" onclick="taskSimulateRun(\''+p.id+'\')">执行一次</button>'
         +   '<button class="task-list-action copy" onclick="taskOpenCopyModal(\''+p.id+'\')">复制</button>'
         +   '<button class="task-list-action edit" onclick="taskOpenEditModal(\''+p.id+'\')">编辑</button>'
@@ -32984,12 +32970,7 @@ function renderTaskArrange(){
         + '<div class="pm-scheme-card-meta">类型：'+taskTypeText(p)+'</div>'
         + '<div class="pm-scheme-card-meta">'+taskPlanSummary(p)+'</div>'
         + '<div class="pm-scheme-card-ops">'
-        +   (function(){
-            if(p.status==='dispatched'){
-              return '<button class="task-list-action revoke" onclick="confirmRevokeDispatchPlan(\''+p.id+'\')" title="撤销后任务将回到待执行队列">撤销下发</button>';
-            }
-            return '<button class="task-list-action dispatch" onclick="taskDispatchPlan(\''+p.id+'\')">下发</button>';
-          })()
+        +   '<button class="task-list-action dispatch" onclick="taskDispatchPlan(\''+p.id+'\')">下发</button>'
         +   '<button class="task-list-action run" onclick="taskSimulateRun(\''+p.id+'\')">执行一次</button>'
         +   '<button class="task-list-action copy" onclick="taskOpenCopyModal(\''+p.id+'\')">复制</button>'
         +   '<button class="task-list-action edit" onclick="taskOpenEditModal(\''+p.id+'\')">编辑</button>'
@@ -33127,6 +33108,14 @@ function taskOpenCreateModal(planId, copyMode){
   var tdStr = taskTodayStr();
   if(!startDateVal) startDateVal = tdStr;
   if(typeVal==='once' && !execDateVal) execDateVal = tdStr;
+  var executionRangesVal = (editPlan && Array.isArray(editPlan.executionRanges)) ? editPlan.executionRanges.slice(0,20) : [];
+  if(countModeVal==='limited' && !executionRangesVal.length){
+    var defaultMonthDay = startDateVal.slice(5);
+    for(var rangeIndex=0;rangeIndex<dailyCount;rangeIndex++) executionRangesVal.push(defaultMonthDay+' '+startVal+' 至 '+defaultMonthDay+' '+endVal);
+  }
+  var executionRangeRowsHtml = executionRangesVal.map(function(rangeValue, rangeIndex){
+    return taskExecutionRangeRowHtml(rangeIndex, taskExecutionRangeParts(rangeValue, startDateVal));
+  }).join('');
   ov.style.display='flex';
   ov.innerHTML = ''
     + '<div class="modal-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display=\'none\'">'
@@ -33142,7 +33131,15 @@ function taskOpenCreateModal(planId, copyMode){
     + '<label class="task-form-label">执行时间</label><input id="taskExecTime" class="pa-input" type="time" value="'+execTimeVal+'">'
     + '</div>'
     + '<div id="taskRecurringFields" style="display:'+(typeVal==='recurring'?'block':'none')+';">'
-    + '<label class="task-form-label">执行策略</label><select id="taskPeriod" class="pa-input" onchange="taskPeriodChange()"><option value="daily"'+periodSel('daily')+'>每日</option><option value="weekly"'+periodSel('weekly')+'>每周</option><option value="monthly"'+periodSel('monthly')+'>每月</option></select>'
+    + '<label class="task-form-label">执行配置</label><select id="taskPeriod" class="pa-input" onchange="taskPeriodChange()"><option value="daily"'+periodSel('daily')+'>每日</option><option value="weekly"'+periodSel('weekly')+'>每周</option><option value="monthly"'+periodSel('monthly')+'>每月</option></select>'
+    + '<label class="task-form-label">次数</label><div style="display:flex;align-items:center;gap:16px;font-size:13px;color:#475569;margin-bottom:4px;">'
+    + '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="radio" name="taskCountMode" value="unlimited" '+(countModeVal==='unlimited'?'checked':'')+' onchange="taskCountModeChange()"> 不限次</label>'
+    + '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="radio" name="taskCountMode" value="limited" '+(countModeVal==='limited'?'checked':'')+' onchange="taskCountModeChange()"> 限次</label>'
+    + '</div>'
+    + '<div id="taskDailyCountWrap" style="display:'+(countModeVal==='limited'?'block':'none')+';padding:10px 12px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;">'
+    + '<input id="taskDailyCount" class="pa-input" style="margin:0;" type="number" min="1" max="20" value="'+dailyCount+'" placeholder="请输入次数" oninput="taskBuildExecutionRanges()">'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;color:#64748b;"><span style="width:48px;flex:0 0 48px;text-align:center;">序号</span><span>起止日期（月-日 时:分）</span></div>'
+    + '<div id="taskExecutionRanges">'+executionRangeRowsHtml+'</div></div>'
     + '<div id="taskWeeklyDays" class="task-weekday-wrap" style="display:none;"><label class="task-form-label">选择星期</label><div class="task-weekday-picker">'
     + '<div id="taskWeekdayTrigger" class="task-weekday-trigger" onclick="taskToggleWeekdayPanel(event)"><span id="taskWeekdayText">'+weekDayText+'</span><span class="arrow">⌄</span></div>'
     + '<div id="taskWeekdayPanel" class="task-weekday-panel">'
@@ -33154,13 +33151,8 @@ function taskOpenCreateModal(planId, copyMode){
     + '<div id="taskMonthlyWeekWrap"><label class="task-form-label">周</label><div class="task-weekday-picker task-schedule-picker"><div id="taskMonthlyWeekTrigger" class="task-weekday-trigger" onclick="taskToggleSchedulePanel(\'taskMonthlyWeekPanel\',\'taskMonthlyWeekTrigger\',event)"><span id="taskMonthlyWeekText">'+monthlyWeekText+'</span><span class="arrow">⌄</span></div><div id="taskMonthlyWeekPanel" class="task-weekday-panel"><div class="task-weekday-presets"><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'weekdays\',true)">全选</button><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'weekdays\',false)">取消全选</button></div><div id="taskMonthlyWeekOptions" class="task-weekday-grid">'+monthlyWeekOptionsHtml+'</div></div></div></div>'
     + '<div id="taskMonthlyDateWrap"><label class="task-form-label">天</label><div class="task-weekday-picker task-schedule-picker"><div id="taskMonthDayTrigger" class="task-weekday-trigger" onclick="taskToggleSchedulePanel(\'taskMonthDayPanel\',\'taskMonthDayTrigger\',event)"><span id="taskMonthDayText">'+monthDayText+'</span><span class="arrow">⌄</span></div><div id="taskMonthDayPanel" class="task-weekday-panel"><div class="task-weekday-presets"><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'days\',true)">全选</button><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'days\',false)">取消全选</button></div><div id="taskMonthDayOptions" class="task-weekday-grid task-month-day-grid">'+monthDayOptionsHtml+'</div></div></div></div>'
     + '</div>'
-    + '<div style="display:flex;gap:12px;"><div style="flex:1"><label class="task-form-label">开始时间</label><input id="taskStart" class="pa-input" type="time" value="'+startVal+'"></div><div style="flex:1"><label class="task-form-label">结束时间</label><input id="taskEnd" class="pa-input" type="time" value="'+endVal+'"></div></div>'
-    + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">提示：以上为机器人执行任务的工作时间窗口，任务将在该时间段内执行</div>'
-    + '<label class="task-form-label">每日执行次数</label><div style="display:flex;align-items:center;gap:16px;font-size:13px;color:#475569;margin-bottom:4px;">'
-    + '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="radio" name="taskCountMode" value="unlimited" '+(countModeVal==='unlimited'?'checked':'')+' onchange="taskCountModeChange()"> 不限次</label>'
-    + '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="radio" name="taskCountMode" value="limited" '+(countModeVal==='limited'?'checked':'')+' onchange="taskCountModeChange()"> 限次</label>'
-    + '</div>'
-    + '<div id="taskDailyCountWrap" style="display:'+(countModeVal==='limited'?'block':'none')+';"><input id="taskDailyCount" class="pa-input" type="number" min="1" max="20" value="'+dailyCount+'" placeholder="请输入次数"></div>'
+    + '<div id="taskDefaultWindowWrap" style="display:'+(countModeVal==='limited'?'none':'block')+';"><div style="display:flex;gap:12px;"><div style="flex:1"><label class="task-form-label">开始时间</label><input id="taskStart" class="pa-input" type="time" value="'+startVal+'"></div><div style="flex:1"><label class="task-form-label">结束时间</label><input id="taskEnd" class="pa-input" type="time" value="'+endVal+'"></div></div>'
+    + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">提示：以上为机器人执行任务的工作时间窗口，任务将在该时间段内执行</div></div>'
     + '<label class="task-form-label">起始日期</label><input id="taskStartDate" class="pa-input" type="date" value="'+startDateVal+'" min="'+tdStr+'" onchange="var e=document.getElementById(\'taskEndDate\'); if(e){ e.min=this.value; }">'
     + '<label class="task-form-label">结束方式</label><select id="taskEndMode" class="pa-input" onchange="taskEndModeChange()"><option value="forever"'+(endMode==='forever'?' selected':'')+'>长期执行</option><option value="date"'+(endMode==='date'?' selected':'')+'>指定结束日期</option></select>'
     + '<div id="taskEndDateWrap" style="display:'+(endMode==='date'?'block':'none')+';"><label class="task-form-label">结束日期</label><input id="taskEndDate" class="pa-input" type="date" value="'+endDateVal+'" min="'+startDateVal+'"></div>'
@@ -33174,6 +33166,7 @@ function taskOpenCreateModal(planId, copyMode){
   taskUpdateWeekdayUI();
   taskMonthlyModeChange();
   taskUpdateMonthlyUI();
+  taskCountModeChange();
   if(!window._taskWeekdayOutsideBound){
     window._taskWeekdayOutsideBound = true;
     document.addEventListener('click', function(ev){
@@ -33325,8 +33318,8 @@ function taskTypeChange(){
     taskUpdateMonthlyUI();
     var cmU = document.querySelector('input[name="taskCountMode"][value="unlimited"]');
     if(cmU) cmU.checked = true;
-    taskCountModeChange();
     var dcI = document.getElementById('taskDailyCount'); if(dcI) dcI.value = '1';
+    taskCountModeChange();
   }
 }
 /* v20.9.97 结束方式切换：长期执行隐藏结束日期，指定结束日期显示并限定不早于起始日期 */
@@ -33368,7 +33361,52 @@ function taskEndUnlimitedChange(){ var c=document.getElementById('taskEndUnlimit
 function taskCountModeChange(){
   var mode = (document.querySelector('input[name="taskCountMode"]:checked')||{}).value || 'unlimited';
   var wrap = document.getElementById('taskDailyCountWrap');
+  var defaultWindow = document.getElementById('taskDefaultWindowWrap');
   if(wrap) wrap.style.display = (mode==='limited') ? 'block' : 'none';
+  if(defaultWindow) defaultWindow.style.display = (mode==='limited') ? 'none' : 'block';
+  if(mode==='limited') taskBuildExecutionRanges();
+}
+function taskExecutionRangeParts(value, baseDate){
+  if(value && typeof value==='object' && value.start && value.end) return {start:value.start, end:value.end};
+  var dateValue = baseDate || (document.getElementById('taskStartDate')||{}).value || taskTodayStr();
+  var year = dateValue.slice(0,4);
+  var match = typeof value==='string' ? value.match(/^(\d{2}-\d{2})\s+(\d{2}:\d{2})\s+至\s+(\d{2}-\d{2})\s+(\d{2}:\d{2})$/) : null;
+  if(match) return {start:year+'-'+match[1]+'T'+match[2], end:year+'-'+match[3]+'T'+match[4]};
+  return taskExecutionRangeDefault();
+}
+function taskExecutionRangeRowHtml(index, values){
+  return '<div class="task-execution-range-row" style="display:flex;align-items:center;gap:10px;margin-top:8px;">'
+    + '<span style="width:48px;flex:0 0 48px;font-size:13px;color:#475569;text-align:center;">'+(index+1)+'</span>'
+    + '<div style="flex:1;min-width:0;display:flex;align-items:center;border:1px solid #d1d5db;border-radius:6px;background:#fff;overflow:hidden;">'
+    + '<input type="datetime-local" class="task-execution-range-start" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始日期时间">'
+    + '<span style="flex:0 0 auto;padding:0 5px;color:#94a3b8;font-size:12px;">至</span>'
+    + '<input type="datetime-local" class="task-execution-range-end" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束日期时间">'
+    + '</div></div>';
+}
+function taskExecutionRangeDefault(){
+  var dateValue = (document.getElementById('taskStartDate')||{}).value || taskTodayStr();
+  var startValue = (document.getElementById('taskStart')||{}).value || '08:00';
+  var endValue = (document.getElementById('taskEnd')||{}).value || '18:00';
+  return {start:dateValue+'T'+startValue, end:dateValue+'T'+endValue};
+}
+function taskBuildExecutionRanges(){
+  var countInput = document.getElementById('taskDailyCount');
+  var container = document.getElementById('taskExecutionRanges');
+  if(!countInput || !container) return;
+  var count = parseInt(countInput.value||'1',10) || 1;
+  count = Math.max(1, Math.min(20, count));
+  var oldValues = Array.prototype.slice.call(container.querySelectorAll('.task-execution-range-row')).map(function(row){
+    return {
+      start:(row.querySelector('.task-execution-range-start')||{}).value || '',
+      end:(row.querySelector('.task-execution-range-end')||{}).value || ''
+    };
+  });
+  var rows = [];
+  for(var i=0;i<count;i++){
+    var values = oldValues[i] || taskExecutionRangeDefault();
+    rows.push(taskExecutionRangeRowHtml(i, values));
+  }
+  container.innerHTML = rows.join('');
 }
 function taskConfirmCreate(){
   var name = (document.getElementById('taskName').value||'').trim();
@@ -33405,7 +33443,7 @@ function taskConfirmCreate(){
     if(!execTime){ showToast('⚠️ 请选择执行时间'); return false; }
     extra = { taskType:'once', execDate:execDate, execTime:execTime,
       period:'once', periods:[], startTime:'', endTime:'', dailyCount:'',
-      startDate:'', endMode:'', endDate:'', endUnlimited:false };
+      executionRanges:[], startDate:'', endMode:'', endDate:'', endUnlimited:false };
   } else {
     var period = document.getElementById('taskPeriod').value;
     var startTime2 = document.getElementById('taskStart').value;
@@ -33413,6 +33451,22 @@ function taskConfirmCreate(){
     /* v20.9.100 执行次数模式 */
     var countMode = (document.querySelector('input[name="taskCountMode"]:checked')||{}).value || 'unlimited';
     var dailyCount2 = (countMode==='limited') ? (parseInt(document.getElementById('taskDailyCount').value||'1',10)||1) : '';
+    var executionRanges2 = [];
+    if(countMode==='limited'){
+      if(dailyCount2<1 || dailyCount2>20){ showToast('⚠️ 次数需填写 1 至 20 的整数'); return false; }
+      var rangeRows = Array.prototype.slice.call(document.querySelectorAll('#taskExecutionRanges .task-execution-range-row'));
+      if(rangeRows.length!==dailyCount2){ taskBuildExecutionRanges(); showToast('⚠️ 请选择每次执行的起止日期'); return false; }
+      for(var rangeNo=0;rangeNo<rangeRows.length;rangeNo++){
+        var rangeStartInput = rangeRows[rangeNo].querySelector('.task-execution-range-start');
+        var rangeEndInput = rangeRows[rangeNo].querySelector('.task-execution-range-end');
+        var rangeStartValue = rangeStartInput ? rangeStartInput.value : '';
+        var rangeEndValue = rangeEndInput ? rangeEndInput.value : '';
+        if(!rangeStartValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的开始日期时间'); if(rangeStartInput) rangeStartInput.focus(); return false; }
+        if(!rangeEndValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的结束日期时间'); if(rangeEndInput) rangeEndInput.focus(); return false; }
+        if(rangeEndValue<=rangeStartValue){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束时间需晚于开始时间'); rangeEndInput.focus(); return false; }
+        executionRanges2.push({start:rangeStartValue, end:rangeEndValue});
+      }
+    }
     /* v20.9.100 周期子选项 */
     var weekDays = Array.prototype.slice.call(document.querySelectorAll('#taskWeeklyDays input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
     var monthValues = Array.prototype.slice.call(document.querySelectorAll('#taskMonthOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
@@ -33430,6 +33484,7 @@ function taskConfirmCreate(){
     if(endMode2==='date' && !endDate2){ showToast('⚠️ 请选择结束日期'); return false; }
     extra = { taskType:'recurring', period:period, periods:['am','pm'],
       startTime:startTime2, endTime:endTime2, dailyCount:dailyCount2, countMode:countMode,
+      executionRanges:executionRanges2,
       weekDays:weekDays, monthValues:monthValues, monthlyMode:monthlyMode2, monthlyWeekDays:monthlyWeekDays2, monthDays:monthDays,
       startDate:startDate2, endMode:endMode2, endDate:endDate2, endUnlimited:endMode2==='forever' };
   }
