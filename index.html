@@ -32899,7 +32899,7 @@ var historyPhotoState = { page:1, pageSize:12, keyword:'', date:'' };
 var historyVideoState = { page:1, pageSize:12, keyword:'', date:'' };
 var robotLogState = { page:1, pageSize:12, keyword:'', date:'' };
 var commandLogState = { page:1, pageSize:12, keyword:'', date:'' };
-var alarmMessageState = { page:1, pageSize:10, keyword:'', robotId:'', level:'', startDate:'', endDate:'' };
+var alarmMessageState = { page:1, pageSize:10, keyword:'', robotId:'', level:'', date:'' };
 
 var taskArrangeFilteredList = null;
 var taskRecordFilteredList = null;
@@ -35465,8 +35465,7 @@ function renderAlarmMessage(){
   });
   if(alarmMessageState.robotId) list = list.filter(function(g){ return g.deviceId===alarmMessageState.robotId; });
   if(alarmMessageState.level) list = list.filter(function(g){ return g.highestLevel===alarmMessageState.level; });
-  if(alarmMessageState.startDate) list = list.filter(function(g){ return String(g.latestTime||'').slice(0,10)>=alarmMessageState.startDate; });
-  if(alarmMessageState.endDate) list = list.filter(function(g){ return String(g.latestTime||'').slice(0,10)<=alarmMessageState.endDate; });
+  if(alarmMessageState.date) list = list.filter(function(g){ return String(g.latestTime||'').slice(0,10)===alarmMessageState.date; });
   alarmMessageFilteredList = list;
   var page = alarmMessageState.page || 1;
   var pageSize = alarmMessageState.pageSize || 10;
@@ -35485,7 +35484,7 @@ function renderAlarmMessage(){
     + '<div class="admin-filter-item"><label>关键词</label><input style="width:210px" type="text" id="amFilterKeyword" placeholder="机器人、告警名称或内容" value="'+esc(alarmMessageState.keyword)+'"></div>'
     + '<div class="admin-filter-item"><label>机器人</label><select style="width:190px" id="amFilterRobot"><option value="">全部</option>'+robotOptions+'</select></div>'
     + '<div class="admin-filter-item"><label>级别</label><select style="width:105px" id="amFilterLevel"><option value="">全部</option><option value="info" '+(alarmMessageState.level==='info'?'selected':'')+'>信息</option><option value="alarm" '+(alarmMessageState.level==='alarm'?'selected':'')+'>告警</option><option value="urgent" '+(alarmMessageState.level==='urgent'?'selected':'')+'>紧急</option></select></div>'
-    + '<div class="admin-filter-item"><label>告警时间</label><input style="width:145px" type="date" id="amFilterStartDate" value="'+esc(alarmMessageState.startDate)+'"><span style="color:#8c8c8c">至</span><input style="width:145px" type="date" id="amFilterEndDate" value="'+esc(alarmMessageState.endDate)+'"></div>'
+    + '<div class="admin-filter-item"><label>告警时间</label><input style="width:145px" type="date" id="amFilterDate" value="'+esc(alarmMessageState.date)+'"></div>'
     + '<div class="admin-filter-btns"><button class="admin-filter-btn primary" onclick="filterAlarmMessage()">搜索</button><button class="admin-filter-btn default" onclick="resetAlarmMessageFilter()">重置</button></div>'
     + '</div></div>';
   var rows = pageList.map(function(g,idx){
@@ -35514,14 +35513,12 @@ function filterAlarmMessage(){
   alarmMessageState.keyword=String(value('amFilterKeyword')||'').trim();
   alarmMessageState.robotId=value('amFilterRobot');
   alarmMessageState.level=value('amFilterLevel');
-  alarmMessageState.startDate=value('amFilterStartDate');
-  alarmMessageState.endDate=value('amFilterEndDate');
-  if(alarmMessageState.startDate && alarmMessageState.endDate && alarmMessageState.startDate>alarmMessageState.endDate){ showToast('开始日期不能晚于结束日期'); return; }
+  alarmMessageState.date=value('amFilterDate');
   alarmMessageState.page=1;
   switchAdminMenu('log','log-alarm');
 }
 function resetAlarmMessageFilter(){
-  alarmMessageState={page:1,pageSize:10,keyword:'',robotId:'',level:'',startDate:'',endDate:''};
+  alarmMessageState={page:1,pageSize:10,keyword:'',robotId:'',level:'',date:''};
   switchAdminMenu('log','log-alarm');
 }
 function goAlarmMessagePage(p){
