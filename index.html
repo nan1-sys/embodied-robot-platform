@@ -33717,34 +33717,30 @@ function taskConfirmCreate(){
     if(period==='weekly' && countMode==='limited'){
       weekDays = executionRanges2.map(function(range){ return range.weekday; }).filter(function(value,index,values){ return values.indexOf(value)===index; }).sort(function(a,b){ return a-b; });
     }
-    var monthValues = Array.prototype.slice.call(document.querySelectorAll('#taskMonthOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
+    var monthValues = [1,2,3,4,5,6,7,8,9,10,11,12];
     var monthlyMode2 = (document.querySelector('input[name="taskMonthlyMode"]:checked')||{}).value || 'week';
+    var monthlyWeeks2 = Array.prototype.slice.call(document.querySelectorAll('#taskMonthlyOrdinalWeekOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
     var monthlyWeekDays2 = Array.prototype.slice.call(document.querySelectorAll('#taskMonthlyWeekOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
     var monthDays = Array.prototype.slice.call(document.querySelectorAll('#taskMonthDayOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
     var startDate2 = document.getElementById('taskStartDate').value;
-    if(period==='monthly'){
+    if(period==='monthly' && countMode==='limited'){
       monthlyMode2 = 'date';
+      monthlyWeeks2 = [];
       monthlyWeekDays2 = [];
-      if(countMode==='limited'){
-        monthValues = executionRanges2.map(function(range){ return range.startMonth; }).filter(function(value,index,values){ return values.indexOf(value)===index; }).sort(function(a,b){ return a-b; });
-        monthDays = executionRanges2.map(function(range){ return range.startDay; }).filter(function(value,index,values){ return values.indexOf(value)===index; }).sort(function(a,b){ return a-b; });
-      } else {
-        monthValues = [1,2,3,4,5,6,7,8,9,10,11,12];
-        monthDays = [parseInt((startDate2||'').slice(8,10),10)||1];
-      }
+      monthDays = executionRanges2.map(function(range){ return range.monthDay; }).filter(function(value,index,values){ return values.indexOf(value)===index; }).sort(function(a,b){ return a-b; });
     }
     var endMode2 = document.getElementById('taskEndMode').value;
     var endDate2 = endMode2==='date' ? (document.getElementById('taskEndDate').value||'') : '';
     if(!startDate2){ showToast('⚠️ 请选择任务生效日期'); return false; }
     if(period==='weekly' && !weekDays.length){ showToast('⚠️ 请至少选择一个星期'); return false; }
-    if(period==='monthly' && !monthValues.length){ showToast('⚠️ 请至少选择一个月份'); return false; }
+    if(period==='monthly' && monthlyMode2==='week' && !monthlyWeeks2.length){ showToast('⚠️ 请至少选择一个执行周次'); return false; }
     if(period==='monthly' && monthlyMode2==='week' && !monthlyWeekDays2.length){ showToast('⚠️ 请至少选择一个星期'); return false; }
     if(period==='monthly' && monthlyMode2==='date' && !monthDays.length){ showToast('⚠️ 请至少选择一个日期'); return false; }
     if(endMode2==='date' && !endDate2){ showToast('⚠️ 请选择任务失效日期'); return false; }
     extra = { taskType:'recurring', period:period, periods:['am','pm'],
       startTime:startTime2, endTime:endTime2, dailyCount:dailyCount2, countMode:countMode,
       executionRanges:executionRanges2,
-      weekDays:weekDays, monthValues:monthValues, monthlyMode:monthlyMode2, monthlyWeekDays:monthlyWeekDays2, monthDays:monthDays,
+      weekDays:weekDays, monthValues:monthValues, monthlyMode:monthlyMode2, monthlyWeeks:monthlyWeeks2, monthlyWeekDays:monthlyWeekDays2, monthDays:monthDays,
       startDate:startDate2, endMode:endMode2, endDate:endDate2, endUnlimited:endMode2==='forever' };
   }
   if(taskEditingId){
