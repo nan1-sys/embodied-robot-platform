@@ -33559,6 +33559,7 @@ function taskExecutionRangeParts(value, fallbackWeekday, fallbackDate){
   if(!(weekday>=0 && weekday<=6)) weekday = 0;
   if(value && typeof value==='object'){
     var savedWeekday = parseInt(value.weekday,10);
+    var savedMonthDay = parseInt(value.monthDay,10);
     var startDateParts = taskExecutionMonthDayPart(value.start, fallbackDate);
     var endDateParts = taskExecutionMonthDayPart(value.end, fallbackDate);
     var savedStartMonth = parseInt(value.startMonth,10), savedStartDay = parseInt(value.startDay,10);
@@ -33567,6 +33568,7 @@ function taskExecutionRangeParts(value, fallbackWeekday, fallbackDate){
       start:taskExecutionTimePart(value.start,'08:00'),
       end:taskExecutionTimePart(value.end,'18:00'),
       weekday:(savedWeekday>=0 && savedWeekday<=6)?savedWeekday:weekday,
+      monthDay:(savedMonthDay>=1 && savedMonthDay<=31)?savedMonthDay:((savedStartDay>=1 && savedStartDay<=31)?savedStartDay:startDateParts.day),
       startMonth:(savedStartMonth>=1 && savedStartMonth<=12)?savedStartMonth:startDateParts.month,
       startDay:(savedStartDay>=1 && savedStartDay<=31)?savedStartDay:startDateParts.day,
       endMonth:(savedEndMonth>=1 && savedEndMonth<=12)?savedEndMonth:endDateParts.month,
@@ -33615,6 +33617,7 @@ function taskExecutionRangeDefault(weekday, fallbackDate){
   var dateValue = (document.getElementById('taskStartDate')||{}).value || fallbackDate || taskTodayStr();
   var dateParts = taskExecutionMonthDayPart(dateValue, dateValue);
   return {start:startValue, end:endValue, weekday:weekdayValue,
+    monthDay:dateParts.day,
     startMonth:dateParts.month, startDay:dateParts.day, endMonth:dateParts.month, endDay:dateParts.day};
 }
 function taskBuildExecutionRanges(){
@@ -33628,10 +33631,7 @@ function taskBuildExecutionRanges(){
       start:(row.querySelector('.task-execution-range-start')||{}).value || '',
       end:(row.querySelector('.task-execution-range-end')||{}).value || '',
       weekday:parseInt((row.querySelector('.task-execution-weekday')||{}).value,10),
-      startMonth:parseInt((row.querySelector('.task-execution-start-month')||{}).value,10),
-      startDay:parseInt((row.querySelector('.task-execution-start-day')||{}).value,10),
-      endMonth:parseInt((row.querySelector('.task-execution-end-month')||{}).value,10),
-      endDay:parseInt((row.querySelector('.task-execution-end-day')||{}).value,10)
+      monthDay:parseInt((row.querySelector('.task-execution-month-day')||{}).value,10)
     };
   });
   var period = (document.getElementById('taskPeriod')||{}).value || 'daily';
