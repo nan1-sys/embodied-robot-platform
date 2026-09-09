@@ -32896,7 +32896,7 @@ var historyPhotoState = { page:1, pageSize:12, keyword:'', date:'' };
 var historyVideoState = { page:1, pageSize:12, keyword:'', date:'' };
 var robotLogState = { page:1, pageSize:12, keyword:'', date:'' };
 var commandLogState = { page:1, pageSize:12, keyword:'', date:'' };
-var alarmMessageState = { page:1, pageSize:10, keyword:'', robotId:'', level:'', processStatus:'', pushStatus:'', startDate:'', endDate:'' };
+var alarmMessageState = { page:1, pageSize:10, keyword:'', robotId:'', level:'', startDate:'', endDate:'' };
 
 var taskArrangeFilteredList = null;
 var taskRecordFilteredList = null;
@@ -35423,15 +35423,6 @@ function resetHistoryVideoFilter(){
 /* ---------------- 日志监控 ---------------- */
 var ALARM_LEVEL_RANK = { info:1, alarm:2, urgent:3 };
 function alarmLevelText(level){ return ({info:'信息',alarm:'告警',urgent:'紧急'})[level] || level || '—'; }
-function alarmProcessText(status){ return ({pending:'待处理',processing:'处理中',done:'已处理'})[status] || status || '—'; }
-function alarmPushText(status){ return ({success:'推送成功',partial:'部分失败',failed:'推送失败'})[status] || status || '—'; }
-function alarmStatusBadge(type, status){
-  var text = type==='process' ? alarmProcessText(status) : alarmPushText(status);
-  var cls = type==='process'
-    ? (status==='done' ? 'enabled' : (status==='processing' ? 'processing' : 'uncalibrated'))
-    : (status==='success' ? 'enabled' : (status==='partial' ? 'uncalibrated' : 'disabled'));
-  return '<span class="status-badge '+cls+'">'+esc(text)+'</span>';
-}
 function alarmFindRobot(deviceId){
   return (typeof robotsData!=='undefined' ? robotsData : []).filter(function(r){ return r.id===deviceId; })[0] || null;
 }
@@ -35452,11 +35443,6 @@ function alarmAggregateRecords(records){
     group.primary = group.records.filter(function(r){ return r.level===group.highestLevel; })[0] || group.records[0] || {};
     group.robot = alarmFindRobot(group.deviceId);
     group.robotName = group.robot ? group.robot.name : (group.primary.deviceName || group.deviceId);
-    group.processStatus = group.records.some(function(r){ return r.processStatus==='pending'; }) ? 'pending'
-      : (group.records.some(function(r){ return r.processStatus==='processing'; }) ? 'processing' : 'done');
-    var pushStates = group.records.map(function(r){ return r.pushStatus; });
-    group.pushStatus = pushStates.length && pushStates.every(function(s){ return s==='failed'; }) ? 'failed'
-      : (pushStates.some(function(s){ return s==='failed' || s==='partial'; }) ? 'partial' : 'success');
     group.taskId = group.records.filter(function(r){ return !!r.taskId; }).map(function(r){ return r.taskId; })[0] || '';
     group.taskName = group.records.filter(function(r){ return !!r.taskName; }).map(function(r){ return r.taskName; })[0] || '';
     return group;
@@ -35473,8 +35459,6 @@ function renderAlarmMessage(){
   });
   if(alarmMessageState.robotId) list = list.filter(function(g){ return g.deviceId===alarmMessageState.robotId; });
   if(alarmMessageState.level) list = list.filter(function(g){ return g.highestLevel===alarmMessageState.level; });
-  if(alarmMessageState.processStatus) list = list.filter(function(g){ return g.processStatus===alarmMessageState.processStatus; });
-  if(alarmMessageState.pushStatus) list = list.filter(function(g){ return g.pushStatus===alarmMessageState.pushStatus; });
   if(alarmMessageState.startDate) list = list.filter(function(g){ return String(g.latestTime||'').slice(0,10)>=alarmMessageState.startDate; });
   if(alarmMessageState.endDate) list = list.filter(function(g){ return String(g.latestTime||'').slice(0,10)<=alarmMessageState.endDate; });
   alarmMessageFilteredList = list;
@@ -35495,8 +35479,6 @@ function renderAlarmMessage(){
     + '<div class="admin-filter-item"><label>关键词</label><input style="width:210px" type="text" id="amFilterKeyword" placeholder="机器人、设备ID或告警内容" value="'+esc(alarmMessageState.keyword)+'"></div>'
     + '<div class="admin-filter-item"><label>机器人</label><select style="width:190px" id="amFilterRobot"><option value="">全部</option>'+robotOptions+'</select></div>'
     + '<div class="admin-filter-item"><label>级别</label><select style="width:105px" id="amFilterLevel"><option value="">全部</option><option value="info" '+(alarmMessageState.level==='info'?'selected':'')+'>信息</option><option value="alarm" '+(alarmMessageState.level==='alarm'?'selected':'')+'>告警</option><option value="urgent" '+(alarmMessageState.level==='urgent'?'selected':'')+'>紧急</option></select></div>'
-    + '<div class="admin-filter-item"><label>处理状态</label><select style="width:115px" id="amFilterProcess"><option value="">全部</option><option value="pending" '+(alarmMessageState.processStatus==='pending'?'selected':'')+'>待处理</option><option value="processing" '+(alarmMessageState.processStatus==='processing'?'selected':'')+'>处理中</option><option value="done" '+(alarmMessageState.processStatus==='done'?'selected':'')+'>已处理</option></select></div>'
-    + '<div class="admin-filter-item"><label>推送状态</label><select style="width:125px" id="amFilterPush"><option value="">全部</option><option value="success" '+(alarmMessageState.pushStatus==='success'?'selected':'')+'>推送成功</option><option value="partial" '+(alarmMessageState.pushStatus==='partial'?'selected':'')+'>部分失败</option><option value="failed" '+(alarmMessageState.pushStatus==='failed'?'selected':'')+'>推送失败</option></select></div>'
     + '<div class="admin-filter-item"><label>开始日期</label><input style="width:145px" type="date" id="amFilterStartDate" value="'+esc(alarmMessageState.startDate)+'"></div>'
     + '<div class="admin-filter-item"><label>结束日期</label><input style="width:145px" type="date" id="amFilterEndDate" value="'+esc(alarmMessageState.endDate)+'"></div>'
     + '<div class="admin-filter-btns"><button class="admin-filter-btn primary" onclick="filterAlarmMessage()">搜索</button><button class="admin-filter-btn default" onclick="resetAlarmMessageFilter()">重置</button></div>'
@@ -35511,16 +35493,14 @@ function renderAlarmMessage(){
       + '<td>'+esc(g.robotName)+'</td>'
       + '<td>'+content+'</td>'
       + '<td style="white-space:nowrap">'+g.records.length+' 条</td>'
-      + '<td>'+alarmStatusBadge('process',g.processStatus)+'</td>'
-      + '<td>'+alarmStatusBadge('push',g.pushStatus)+'</td>'
       + '<td><button class="admin-mini-btn ghost" onclick="alarmOpenDetail(\''+esc(g.key)+'\')">查看</button></td>'
       + '</tr>';
   }).join('');
   var toolbar = '<div class="admin-table-toolbar"><div class="admin-table-title">告警日志（共 '+total+' 条）</div><div style="font-size:12px;color:#8c8c8c">数据来源：AIoT</div></div>';
   var pg = renderSimplePagination('goAlarmMessagePage',total,page,totalPages);
   return filterCard+'<div class="admin-table-card">'+toolbar
-    + '<div style="overflow-x:auto"><table class="admin-data-table" style="min-width:1120px"><thead><tr><th style="width:50px">序号</th><th style="width:150px">告警时间</th><th style="width:80px">告警级别</th><th style="width:185px">机器人</th><th>告警内容</th><th style="width:80px">告警数量</th><th style="width:95px">处理状态</th><th style="width:95px">推送状态</th><th style="width:70px">操作</th></tr></thead><tbody>'
-    + (rows||'<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:28px">暂无符合条件的告警日志</td></tr>')
+    + '<div style="overflow-x:auto"><table class="admin-data-table" style="min-width:900px"><thead><tr><th style="width:50px">序号</th><th style="width:150px">告警时间</th><th style="width:80px">告警级别</th><th style="width:185px">机器人</th><th>告警内容</th><th style="width:80px">告警数量</th><th style="width:70px">操作</th></tr></thead><tbody>'
+    + (rows||'<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:28px">暂无符合条件的告警日志</td></tr>')
     + '</tbody></table></div>'+pg+'</div>';
 }
 function filterAlarmMessage(){
@@ -35528,8 +35508,6 @@ function filterAlarmMessage(){
   alarmMessageState.keyword=String(value('amFilterKeyword')||'').trim();
   alarmMessageState.robotId=value('amFilterRobot');
   alarmMessageState.level=value('amFilterLevel');
-  alarmMessageState.processStatus=value('amFilterProcess');
-  alarmMessageState.pushStatus=value('amFilterPush');
   alarmMessageState.startDate=value('amFilterStartDate');
   alarmMessageState.endDate=value('amFilterEndDate');
   if(alarmMessageState.startDate && alarmMessageState.endDate && alarmMessageState.startDate>alarmMessageState.endDate){ showToast('开始日期不能晚于结束日期'); return; }
@@ -35537,7 +35515,7 @@ function filterAlarmMessage(){
   switchAdminMenu('log','log-alarm');
 }
 function resetAlarmMessageFilter(){
-  alarmMessageState={page:1,pageSize:10,keyword:'',robotId:'',level:'',processStatus:'',pushStatus:'',startDate:'',endDate:''};
+  alarmMessageState={page:1,pageSize:10,keyword:'',robotId:'',level:'',startDate:'',endDate:''};
   switchAdminMenu('log','log-alarm');
 }
 function goAlarmMessagePage(p){
@@ -35558,7 +35536,7 @@ function alarmOpenDetail(groupKey){
   var sn=robot ? robot.sn : group.deviceId;
   var taskValue=group.taskName||'—';
   var rawRows=group.records.map(function(r){
-    return '<tr><td style="white-space:nowrap">'+esc(r.id)+'</td><td style="white-space:nowrap">'+esc(r.time)+'</td><td><span class="alarm-level '+esc(r.level)+'">'+esc(alarmLevelText(r.level))+'</span></td><td>'+esc(r.content)+'</td><td>'+alarmStatusBadge('process',r.processStatus)+'</td><td>'+alarmStatusBadge('push',r.pushStatus)+'</td></tr>';
+    return '<tr><td style="white-space:nowrap">'+esc(r.id)+'</td><td style="white-space:nowrap">'+esc(r.time)+'</td><td><span class="alarm-level '+esc(r.level)+'">'+esc(alarmLevelText(r.level))+'</span></td><td>'+esc(r.content)+'</td></tr>';
   }).join('');
   var overlay=document.createElement('div');
   overlay.id='alarmDetailOverlay';
@@ -35575,12 +35553,10 @@ function alarmOpenDetail(groupKey){
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">位置</div><div class="alarm-detail-value">'+esc(location)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">首次告警时间</div><div class="alarm-detail-value">'+esc(group.firstTime)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">最近告警时间</div><div class="alarm-detail-value">'+esc(group.latestTime)+'</div></div>'
-    + '<div class="alarm-detail-field"><div class="alarm-detail-label">处理状态</div><div class="alarm-detail-value">'+alarmStatusBadge('process',group.processStatus)+'</div></div>'
-    + '<div class="alarm-detail-field"><div class="alarm-detail-label">推送状态</div><div class="alarm-detail-value">'+alarmStatusBadge('push',group.pushStatus)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">关联任务</div><div class="alarm-detail-value">'+esc(taskValue)+'</div></div>'
     + '</div>'
     + '<div class="alarm-detail-section-title">AIoT 原始告警记录（'+group.records.length+' 条）</div>'
-    + '<div class="alarm-detail-records"><table class="admin-data-table"><thead><tr><th>记录 ID</th><th>告警时间</th><th>级别</th><th>告警内容</th><th>处理状态</th><th>推送状态</th></tr></thead><tbody>'+rawRows+'</tbody></table></div>'
+    + '<div class="alarm-detail-records"><table class="admin-data-table"><thead><tr><th>记录 ID</th><th>告警时间</th><th>级别</th><th>告警内容</th></tr></thead><tbody>'+rawRows+'</tbody></table></div>'
     + '</div><div class="alarm-detail-foot"><button class="default" onclick="closeAlarmDetail()">关闭</button>'
     + (group.taskId?'<button class="default" onclick="alarmOpenTask(\''+esc(group.taskId)+'\')">查看关联任务</button>':'')
     + '<button class="primary" onclick="alarmOpenRobot(\''+esc(group.deviceId)+'\')">查看机器人</button></div></div>';
