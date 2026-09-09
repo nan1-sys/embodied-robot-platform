@@ -33293,9 +33293,9 @@ function taskOpenCreateModal(planId, copyMode){
     + '</div>'
     + '<div id="taskDefaultWindowWrap" style="display:'+(countModeVal==='limited'?'none':'block')+';"><div style="display:flex;gap:12px;"><div style="flex:1"><label class="task-form-label">开始时间</label><input id="taskStart" class="pa-input" type="time" value="'+startVal+'"></div><div style="flex:1"><label class="task-form-label">结束时间</label><input id="taskEnd" class="pa-input" type="time" value="'+endVal+'"></div></div>'
     + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">提示：以上为机器人执行任务的工作时间窗口，任务将在该时间段内执行</div></div>'
-    + '<label class="task-form-label">任务开始日期</label><input id="taskStartDate" class="pa-input" type="date" value="'+startDateVal+'" min="'+tdStr+'" onchange="var e=document.getElementById(\'taskEndDate\'); if(e){ e.min=this.value; }">'
-    + '<label class="task-form-label">任务结束方式</label><select id="taskEndMode" class="pa-input" onchange="taskEndModeChange()"><option value="forever"'+(endMode==='forever'?' selected':'')+'>长期执行</option><option value="date"'+(endMode==='date'?' selected':'')+'>指定结束日期</option></select>'
-    + '<div id="taskEndDateWrap" style="display:'+(endMode==='date'?'block':'none')+';"><label class="task-form-label">任务结束日期</label><input id="taskEndDate" class="pa-input" type="date" value="'+endDateVal+'" min="'+startDateVal+'"></div>'
+    + '<label class="task-form-label">任务生效日期</label><input id="taskStartDate" class="pa-input" type="date" value="'+startDateVal+'" min="'+tdStr+'" onchange="var e=document.getElementById(\'taskEndDate\'); if(e){ e.min=this.value; }">'
+    + '<label class="task-form-label">任务失效方式</label><select id="taskEndMode" class="pa-input" onchange="taskEndModeChange()"><option value="forever"'+(endMode==='forever'?' selected':'')+'>长期执行</option><option value="date"'+(endMode==='date'?' selected':'')+'>指定失效日期</option></select>'
+    + '<div id="taskEndDateWrap" style="display:'+(endMode==='date'?'block':'none')+';"><label class="task-form-label">任务失效日期</label><input id="taskEndDate" class="pa-input" type="date" value="'+endDateVal+'" min="'+startDateVal+'"></div>'
     + '</div>'
     + '<label class="task-form-label">备注</label><textarea id="taskNote" class="pa-input" rows="2" placeholder="可选">'+noteVal+'</textarea>'
     + '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;"><button type="button" class="admin-action-btn" onclick="document.getElementById(\'overlayView\').style.display=\'none\'">取消</button><button type="submit" class="admin-action-btn primary">'+okText+'</button></div>'
@@ -33474,7 +33474,7 @@ function taskTypeChange(){
     taskCountModeChange();
   }
 }
-/* v20.9.97 结束方式切换：长期执行隐藏结束日期，指定结束日期显示并限定不早于起始日期 */
+/* v20.9.97 失效方式切换：长期执行隐藏失效日期，指定失效日期显示并限定不早于生效日期 */
 function taskEndModeChange(){
   var m = document.getElementById('taskEndMode'); if(!m) return;
   var w = document.getElementById('taskEndDateWrap');
@@ -33746,12 +33746,12 @@ function taskConfirmCreate(){
     }
     var endMode2 = document.getElementById('taskEndMode').value;
     var endDate2 = endMode2==='date' ? (document.getElementById('taskEndDate').value||'') : '';
-    if(!startDate2){ showToast('⚠️ 请选择任务开始日期'); return false; }
+    if(!startDate2){ showToast('⚠️ 请选择任务生效日期'); return false; }
     if(period==='weekly' && !weekDays.length){ showToast('⚠️ 请至少选择一个星期'); return false; }
     if(period==='monthly' && !monthValues.length){ showToast('⚠️ 请至少选择一个月份'); return false; }
     if(period==='monthly' && monthlyMode2==='week' && !monthlyWeekDays2.length){ showToast('⚠️ 请至少选择一个星期'); return false; }
     if(period==='monthly' && monthlyMode2==='date' && !monthDays.length){ showToast('⚠️ 请至少选择一个日期'); return false; }
-    if(endMode2==='date' && !endDate2){ showToast('⚠️ 请选择任务结束日期'); return false; }
+    if(endMode2==='date' && !endDate2){ showToast('⚠️ 请选择任务失效日期'); return false; }
     extra = { taskType:'recurring', period:period, periods:['am','pm'],
       startTime:startTime2, endTime:endTime2, dailyCount:dailyCount2, countMode:countMode,
       executionRanges:executionRanges2,
