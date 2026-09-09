@@ -33308,7 +33308,6 @@ function taskPeriodChange(){
   else taskSyncExecutionRangeWeekday();
   if(p!=='weekly') taskCloseWeekdayPanel();
   if(p!=='monthly' || countMode==='limited') taskCloseMonthlyPanels();
-  if(p==='monthly' && countMode!=='limited') taskMonthlyModeChange();
 }
 function taskToggleWeekdayPanel(ev){
   taskToggleSchedulePanel('taskWeekdayPanel','taskWeekdayTrigger',ev);
@@ -33324,7 +33323,7 @@ function taskToggleSchedulePanel(panelId,triggerId,ev){
   trigger.classList.toggle('open',willOpen);
 }
 function taskCloseSchedulePanels(exceptPanelId){
-  var pairs = [['taskWeekdayPanel','taskWeekdayTrigger'],['taskMonthlyOrdinalWeekPanel','taskMonthlyOrdinalWeekTrigger'],['taskMonthlyWeekPanel','taskMonthlyWeekTrigger'],['taskMonthDayPanel','taskMonthDayTrigger']];
+  var pairs = [['taskWeekdayPanel','taskWeekdayTrigger'],['taskMonthDayPanel','taskMonthDayTrigger']];
   pairs.forEach(function(pair){
     if(pair[0]===exceptPanelId) return;
     var panel=document.getElementById(pair[0]), trigger=document.getElementById(pair[1]);
@@ -33339,8 +33338,8 @@ function taskCloseWeekdayPanel(){
   if(trigger) trigger.classList.remove('open');
 }
 function taskCloseMonthlyPanels(){
-  ['taskMonthlyOrdinalWeekPanel','taskMonthlyWeekPanel','taskMonthDayPanel'].forEach(function(id){ var panel=document.getElementById(id); if(panel) panel.classList.remove('open'); });
-  ['taskMonthlyOrdinalWeekTrigger','taskMonthlyWeekTrigger','taskMonthDayTrigger'].forEach(function(id){ var trigger=document.getElementById(id); if(trigger) trigger.classList.remove('open'); });
+  ['taskMonthDayPanel'].forEach(function(id){ var panel=document.getElementById(id); if(panel) panel.classList.remove('open'); });
+  ['taskMonthDayTrigger'].forEach(function(id){ var trigger=document.getElementById(id); if(trigger) trigger.classList.remove('open'); });
 }
 function taskSetWeekdayPreset(mode){
   var preset = mode==='workday' ? [0,1,2,3,4] : (mode==='weekend' ? [5,6] : [0,1,2,3,4,5,6]);
@@ -33359,36 +33358,18 @@ function taskUpdateWeekdayUI(){
   var buttons = document.querySelectorAll('#taskWeekdayPanel .task-weekday-preset');
   for(var i=0;i<buttons.length;i++) buttons[i].classList.toggle('active',buttons[i].getAttribute('data-mode')===activeMode);
 }
-function taskMonthlyModeChange(){
-  var mode = (document.querySelector('input[name="taskMonthlyMode"]:checked')||{}).value || 'week';
-  var weekWrap = document.getElementById('taskMonthlyWeekWrap');
-  var dateWrap = document.getElementById('taskMonthlyDateWrap');
-  if(weekWrap) weekWrap.style.display = mode==='week' ? 'block' : 'none';
-  if(dateWrap) dateWrap.style.display = mode==='date' ? 'block' : 'none';
-  taskCloseMonthlyPanels();
-}
 function taskSetMonthlyGroup(group,checked){
-  var selector = group==='weeks' ? '#taskMonthlyOrdinalWeekOptions input[type=checkbox]' : (group==='weekdays' ? '#taskMonthlyWeekOptions input[type=checkbox]' : '#taskMonthDayOptions input[type=checkbox]');
+  var selector = '#taskMonthDayOptions input[type=checkbox]';
   var inputs = document.querySelectorAll(selector);
   for(var i=0;i<inputs.length;i++) inputs[i].checked = !!checked;
   taskUpdateMonthlyUI();
 }
 function taskUpdateMonthlyUI(){
-  var weekLabels = ['周一','周二','周三','周四','周五','周六','周日'];
-  var ordinalLabels = ['第一周','第二周','第三周','第四周','第五周'];
   function selectedValues(selector){ return Array.prototype.slice.call(document.querySelectorAll(selector)).filter(function(c){ return c.checked; }).map(function(c){ return parseInt(c.value,10); }).sort(function(a,b){ return a-b; }); }
   function syncOptions(selector){ Array.prototype.slice.call(document.querySelectorAll(selector)).forEach(function(c){ var option=c.closest('.task-weekday-option'); if(option) option.classList.toggle('selected',c.checked); }); }
-  var ordinalWeeks = selectedValues('#taskMonthlyOrdinalWeekOptions input[type=checkbox]');
-  var weekDays = selectedValues('#taskMonthlyWeekOptions input[type=checkbox]');
   var monthDays = selectedValues('#taskMonthDayOptions input[type=checkbox]');
-  syncOptions('#taskMonthlyOrdinalWeekOptions input[type=checkbox]');
-  syncOptions('#taskMonthlyWeekOptions input[type=checkbox]');
   syncOptions('#taskMonthDayOptions input[type=checkbox]');
-  var ordinalText=document.getElementById('taskMonthlyOrdinalWeekText');
-  var weekText=document.getElementById('taskMonthlyWeekText');
   var dayText=document.getElementById('taskMonthDayText');
-  if(ordinalText) ordinalText.textContent=ordinalWeeks.length===5 ? '每周' : (ordinalWeeks.length ? ordinalWeeks.map(function(v){ return ordinalLabels[v-1]; }).join('、') : '请选择周次');
-  if(weekText) weekText.textContent=weekDays.length===7 ? '每天' : (weekDays.length ? weekDays.map(function(v){ return weekLabels[v]; }).join('、') : '请选择星期');
   if(dayText) dayText.textContent=monthDays.length===31 ? '每天' : (monthDays.length ? monthDays.map(function(v){ return v+'号'; }).join('、') : '请选择日期');
 }
 /* v20.9.97 今日日期（yyyy-mm-dd），用于执行日期/起始日期默认值与禁用过去日期 */
@@ -33429,16 +33410,9 @@ function taskTypeChange(){
     var wks = document.querySelectorAll('#taskWeeklyDays input[type=checkbox]');
     for(var wi=0;wi<wks.length;wi++) wks[wi].checked = true;
     taskUpdateWeekdayUI();
-    var monthlyOrdinalChecks = document.querySelectorAll('#taskMonthlyOrdinalWeekOptions input[type=checkbox]');
-    for(var moi=0;moi<monthlyOrdinalChecks.length;moi++) monthlyOrdinalChecks[moi].checked = true;
-    var monthlyWeekChecks = document.querySelectorAll('#taskMonthlyWeekOptions input[type=checkbox]');
-    for(var mwi=0;mwi<monthlyWeekChecks.length;mwi++) monthlyWeekChecks[mwi].checked = true;
     var monthDayChecks = document.querySelectorAll('#taskMonthDayOptions input[type=checkbox]');
     var todayDay = parseInt(td.slice(8,10),10);
     for(var mdi=0;mdi<monthDayChecks.length;mdi++) monthDayChecks[mdi].checked = parseInt(monthDayChecks[mdi].value,10)===todayDay;
-    var monthlyDateMode = document.querySelector('input[name="taskMonthlyMode"][value="date"]');
-    if(monthlyDateMode) monthlyDateMode.checked = true;
-    taskMonthlyModeChange();
     taskUpdateMonthlyUI();
     var cmU = document.querySelector('input[name="taskCountMode"][value="unlimited"]');
     if(cmU) cmU.checked = true;
@@ -33695,9 +33669,9 @@ function taskConfirmCreate(){
       weekDays = executionRanges2.map(function(range){ return range.weekday; }).filter(function(value,index,values){ return values.indexOf(value)===index; }).sort(function(a,b){ return a-b; });
     }
     var monthValues = [1,2,3,4,5,6,7,8,9,10,11,12];
-    var monthlyMode2 = (document.querySelector('input[name="taskMonthlyMode"]:checked')||{}).value || 'week';
-    var monthlyWeeks2 = Array.prototype.slice.call(document.querySelectorAll('#taskMonthlyOrdinalWeekOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
-    var monthlyWeekDays2 = Array.prototype.slice.call(document.querySelectorAll('#taskMonthlyWeekOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
+    var monthlyMode2 = 'date';
+    var monthlyWeeks2 = [];
+    var monthlyWeekDays2 = [];
     var monthDays = Array.prototype.slice.call(document.querySelectorAll('#taskMonthDayOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
     var startDate2 = document.getElementById('taskStartDate').value;
     if(period==='monthly' && countMode==='limited'){
@@ -33710,9 +33684,7 @@ function taskConfirmCreate(){
     var endDate2 = endMode2==='date' ? (document.getElementById('taskEndDate').value||'') : '';
     if(!startDate2){ showToast('⚠️ 请选择任务生效日期'); return false; }
     if(period==='weekly' && !weekDays.length){ showToast('⚠️ 请至少选择一个星期'); return false; }
-    if(period==='monthly' && monthlyMode2==='week' && !monthlyWeeks2.length){ showToast('⚠️ 请至少选择一个执行周次'); return false; }
-    if(period==='monthly' && monthlyMode2==='week' && !monthlyWeekDays2.length){ showToast('⚠️ 请至少选择一个星期'); return false; }
-    if(period==='monthly' && monthlyMode2==='date' && !monthDays.length){ showToast('⚠️ 请至少选择一个日期'); return false; }
+    if(period==='monthly' && !monthDays.length){ showToast('⚠️ 请至少选择一个finder日期'); return false; }
     if(endMode2==='date' && !endDate2){ showToast('⚠️ 请选择任务失效日期'); return false; }
     extra = { taskType:'recurring', period:period, periods:['am','pm'],
       startTime:startTime2, endTime:endTime2, dailyCount:dailyCount2, countMode:countMode,
