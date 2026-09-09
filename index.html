@@ -33004,16 +33004,17 @@ function taskPlanSummary(p){
     var dn=['一','二','三','四','五','六','日']; s += '('+p.weekDays.map(function(d){return '周'+dn[d];}).join(',')+')';
   }
   if(p.period==='monthly'){
-    var monthNames=['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
-    var monthPrefix = (p.monthValues && p.monthValues.length && p.monthValues.length<12) ? p.monthValues.slice().sort(function(a,b){return a-b}).map(function(v){return monthNames[v-1];}).join('、')+' · ' : '';
     if(p.monthlyMode==='week'){
       var mdn=['一','二','三','四','五','六','日'];
-      var monthlyWeeks=(p.monthlyWeekDays||[0,1,2,3,4,5,6]);
-      s += '('+monthPrefix+(monthlyWeeks.length===7?'每周':monthlyWeeks.map(function(d){return '周'+mdn[d];}).join(','))+')';
+      var monthlyOrdinals=(p.monthlyWeeks||[1,2,3,4,5]);
+      var monthlyWeekdays=(p.monthlyWeekDays||[0,1,2,3,4,5,6]);
+      var ordinalText=monthlyOrdinals.length===5?'每周':monthlyOrdinals.map(function(w){return '第'+w+'周';}).join(',');
+      var weekdayText=monthlyWeekdays.length===7?'每天':monthlyWeekdays.map(function(d){return '周'+mdn[d];}).join(',');
+      s += '('+ordinalText+' · '+weekdayText+')';
     } else {
       var monthlyDates=(p.monthDays||[]);
       var dateText=monthlyDates.length===31?'每天':monthlyDates.slice().sort(function(a,b){return a-b}).map(function(v){return v+'日';}).join(',');
-      if(monthPrefix || dateText!=='每天') s += '('+monthPrefix+(dateText||'未选择日期')+')';
+      if(dateText!=='每天') s += '('+(dateText||'未选择日期')+')';
     }
   }
   if(!(p.countMode==='limited' && Array.isArray(p.executionRanges) && p.executionRanges.length)){
@@ -33219,21 +33220,21 @@ function taskOpenCreateModal(planId, copyMode){
     return '<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+value+'" '+(checked?'checked':'')+' onchange="taskUpdateWeekdayUI()"><span>'+weekDayLabels[value]+'</span></label>';
   }).join('');
   var weekDayText = weekDaysVal.slice().sort(function(a,b){ return a-b; }).map(function(value){ return weekDayLabels[value]; }).join('、') || '请选择星期';
-  var monthValues = (editPlan && Array.isArray(editPlan.monthValues) && editPlan.monthValues.length)
-    ? editPlan.monthValues.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=1 && v<=12; })
-    : [1,2,3,4,5,6,7,8,9,10,11,12];
   var monthlyMode = editPlan && editPlan.monthlyMode ? editPlan.monthlyMode : 'date';
+  var monthlyWeeks = (editPlan && Array.isArray(editPlan.monthlyWeeks) && editPlan.monthlyWeeks.length)
+    ? editPlan.monthlyWeeks.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=1 && v<=5; })
+    : [1,2,3,4,5];
   var monthlyWeekDays = (editPlan && Array.isArray(editPlan.monthlyWeekDays) && editPlan.monthlyWeekDays.length)
     ? editPlan.monthlyWeekDays.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=0 && v<=6; })
     : [0,1,2,3,4,5,6];
   var monthDaysVal = (editPlan && Array.isArray(editPlan.monthDays) && editPlan.monthDays.length)
     ? editPlan.monthDays.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=1 && v<=31; })
     : [parseInt((editPlan && editPlan.startDate ? editPlan.startDate : taskTodayStr()).slice(8,10),10)||1];
-  var monthLabels = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
-  var monthOptionsHtml = (function(){ var html=''; for(var month=1;month<=12;month++){ var checked=monthValues.indexOf(month)>-1; html+='<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+month+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+monthLabels[month-1]+'</span></label>'; } return html; })();
+  var monthlyOrdinalLabels = ['第一周','第二周','第三周','第四周','第五周'];
+  var monthlyOrdinalWeekOptionsHtml = monthlyOrdinalLabels.map(function(label,index){ var value=index+1, checked=monthlyWeeks.indexOf(value)>-1; return '<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+value+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+label+'</span></label>'; }).join('');
   var monthlyWeekOptionsHtml = weekDayOrder.map(function(value){ var checked=monthlyWeekDays.indexOf(value)>-1; return '<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+value+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+weekDayLabels[value]+'</span></label>'; }).join('');
   var monthDayOptionsHtml = (function(){ var html=''; for(var day=1;day<=31;day++){ var checked=monthDaysVal.indexOf(day)>-1; html+='<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+day+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+day+'号</span></label>'; } return html; })();
-  var monthText = monthValues.slice().sort(function(a,b){ return a-b; }).map(function(v){ return monthLabels[v-1]; }).join('、') || '请选择月份';
+  var monthlyOrdinalWeekText = monthlyWeeks.length===5 ? '每周' : monthlyWeeks.slice().sort(function(a,b){ return a-b; }).map(function(v){ return monthlyOrdinalLabels[v-1]; }).join('、');
   var monthlyWeekText = monthlyWeekDays.length===7 ? '每周' : monthlyWeekDays.slice().sort(function(a,b){ return a-b; }).map(function(v){ return weekDayLabels[v]; }).join('、');
   var monthDayText = monthDaysVal.length===31 ? '每天' : monthDaysVal.slice().sort(function(a,b){ return a-b; }).map(function(v){ return v+'号'; }).join('、');
   var tdStr = taskTodayStr();
