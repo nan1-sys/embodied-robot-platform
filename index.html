@@ -4145,6 +4145,7 @@ bdeploy-model-group { margin-bottom:8px; }
               <div class="admin-menu-main" onclick="toggleAdminMenuGroup('log',event)"><span class="admin-menu-icon">📝</span><span class="admin-menu-text">日志监控</span><span class="admin-menu-chevron">▾</span></div>
               <div class="admin-menu-desc" style="display:none"></div>
               <div class="admin-sub-list">
+                <div class="admin-sub-item" data-admin-sub="log-alarm" onclick="switchAdminMenu('log','log-alarm',event)">告警消息</div>
                 <div class="admin-sub-item" data-admin-sub="log-robot" onclick="switchAdminMenu('log','log-robot',event)">机器人日志</div>
                 <div class="admin-sub-item" data-admin-sub="log-command" onclick="switchAdminMenu('log','log-command',event)">指令日志</div>
               </div>
@@ -26461,6 +26462,7 @@ const ADMIN_MENU_META = {
   log: {
     name:'日志监控',
     subs:{
+      'log-alarm':{ name:'告警消息', desc:'查询由 AIoT 推送的机器人告警消息。', panel:'', actions:[] },
       'log-robot':{ name:'机器人日志', desc:'查看机器人运行、任务执行与异常日志，按任务关联展示。', panel:'', actions:[] },
       'log-command':{ name:'指令日志', desc:'查看平台下发给机器人的指令与机器人回传的上传数据。', panel:'', actions:[] }
     }
@@ -27771,6 +27773,7 @@ function getAdminDetailHtml(menuKey, subKey){
     return '';
   }
   if(menuKey === 'log'){
+    if(subKey === 'log-alarm') return renderAlarmMessage();
     if(subKey === 'log-robot') return renderRobotLog();
     if(subKey === 'log-command') return renderCommandLog();
     return '';
@@ -32845,6 +32848,7 @@ var historyPhotos = [];
 var historyVideos = [];
 var robotLogs = [];
 var commandLogs = [];
+var alarmMessages = [];
 
 var TASK_PLANS_KEY = 'embodied_robot_task_plans_v1';
 var TASK_RECORDS_KEY = 'embodied_robot_task_records_v1';
@@ -32853,6 +32857,7 @@ var HISTORY_PHOTOS_KEY = 'embodied_robot_history_photos_v1';
 var HISTORY_VIDEOS_KEY = 'embodied_robot_history_videos_v1';
 var ROBOT_LOGS_KEY = 'embodied_robot_robot_logs_v1';
 var COMMAND_LOGS_KEY = 'embodied_robot_command_logs_v1';
+var ALARM_MESSAGES_KEY = 'embodied_robot_alarm_messages_v1';
 
 var taskArrangeState = { view:'card', page:1, pageSize:8, keyword:'' };
 var taskRecordState = { view:'list', id:null, page:1, pageSize:10, keyword:'', status:'' };
@@ -32861,6 +32866,7 @@ var historyPhotoState = { page:1, pageSize:12, keyword:'', date:'' };
 var historyVideoState = { page:1, pageSize:12, keyword:'', date:'' };
 var robotLogState = { page:1, pageSize:12, keyword:'', date:'' };
 var commandLogState = { page:1, pageSize:12, keyword:'', date:'' };
+var alarmMessageState = { page:1, pageSize:10, keyword:'', robotId:'', level:'', processStatus:'', pushStatus:'', startDate:'', endDate:'' };
 
 var taskArrangeFilteredList = null;
 var taskRecordFilteredList = null;
@@ -32869,6 +32875,7 @@ var historyPhotoFilteredList = null;
 var historyVideoFilteredList = null;
 var robotLogFilteredList = null;
 var commandLogFilteredList = null;
+var alarmMessageFilteredList = null;
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 /* v20.9.132 通用删除二次确认：名称加粗放大，确认后执行回调 */
@@ -32911,6 +32918,7 @@ function taskLoadAll(){
   historyVideos = taskLsGet(HISTORY_VIDEOS_KEY, null);
   robotLogs = taskLsGet(ROBOT_LOGS_KEY, null);
   commandLogs = taskLsGet(COMMAND_LOGS_KEY, null);
+  alarmMessages = taskLsGet(ALARM_MESSAGES_KEY, null);
   if(!taskPlans){ taskPlans = taskSeedPlans(); taskLsSet(TASK_PLANS_KEY, taskPlans); }
   if(!taskRecords){ taskRecords = taskSeedRecords(); taskLsSet(TASK_RECORDS_KEY, taskRecords); }
   if(!taskReports){ taskReports = taskSeedReports(); taskLsSet(TASK_REPORTS_KEY, taskReports); }
@@ -32918,6 +32926,7 @@ function taskLoadAll(){
   if(!historyVideos){ historyVideos = taskSeedVideos(); taskLsSet(HISTORY_VIDEOS_KEY, historyVideos); }
   if(!robotLogs){ robotLogs = taskSeedRobotLogs(); taskLsSet(ROBOT_LOGS_KEY, robotLogs); }
   if(!commandLogs){ commandLogs = taskSeedCommandLogs(); taskLsSet(COMMAND_LOGS_KEY, commandLogs); }
+  if(!alarmMessages){ alarmMessages = taskSeedAlarmMessages(); taskLsSet(ALARM_MESSAGES_KEY, alarmMessages); }
   /* v20.9.200：为旧版示例任务补齐绑定机器人，确保卡片和列表均可回显设备 */
   var taskPlanRobotUpdated = false;
   taskPlans.forEach(function(plan){
@@ -32940,6 +32949,7 @@ function taskSavePhotos(){ taskLsSet(HISTORY_PHOTOS_KEY, historyPhotos); }
 function taskSaveVideos(){ taskLsSet(HISTORY_VIDEOS_KEY, historyVideos); }
 function taskSaveRobotLogs(){ taskLsSet(ROBOT_LOGS_KEY, robotLogs); }
 function taskSaveCommandLogs(){ taskLsSet(COMMAND_LOGS_KEY, commandLogs); }
+function taskSaveAlarmMessages(){ taskLsSet(ALARM_MESSAGES_KEY, alarmMessages); }
 
 function periodText(p){ return ({once:'单次',daily:'每日',weekly:'每周',monthly:'每月'})[p] || p; }
 /* v20.9.97 任务类型/执行计划展示（列表与卡片共用）：一次性→执行日期+时间；周期性→周期+时段+结束方式+每日次数 */
