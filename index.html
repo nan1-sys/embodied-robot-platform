@@ -33696,29 +33696,20 @@ function taskConfirmCreate(){
         var rangeStartInput = rangeRows[rangeNo].querySelector('.task-execution-range-start');
         var rangeEndInput = rangeRows[rangeNo].querySelector('.task-execution-range-end');
         var rangeWeekdayInput = rangeRows[rangeNo].querySelector('.task-execution-weekday');
-        var rangeStartMonthInput = rangeRows[rangeNo].querySelector('.task-execution-start-month');
-        var rangeStartDayInput = rangeRows[rangeNo].querySelector('.task-execution-start-day');
-        var rangeEndMonthInput = rangeRows[rangeNo].querySelector('.task-execution-end-month');
-        var rangeEndDayInput = rangeRows[rangeNo].querySelector('.task-execution-end-day');
+        var rangeMonthDayInput = rangeRows[rangeNo].querySelector('.task-execution-month-day');
         var rangeStartValue = rangeStartInput ? rangeStartInput.value : '';
         var rangeEndValue = rangeEndInput ? rangeEndInput.value : '';
         if(!rangeStartValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的开始时间'); if(rangeStartInput) rangeStartInput.focus(); return false; }
         if(!rangeEndValue){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的结束时间'); if(rangeEndInput) rangeEndInput.focus(); return false; }
-        var rangeStartMonth = rangeStartMonthInput ? parseInt(rangeStartMonthInput.value,10) : null;
-        var rangeStartDay = rangeStartDayInput ? parseInt(rangeStartDayInput.value,10) : null;
-        var rangeEndMonth = rangeEndMonthInput ? parseInt(rangeEndMonthInput.value,10) : null;
-        var rangeEndDay = rangeEndDayInput ? parseInt(rangeEndDayInput.value,10) : null;
+        var rangeMonthDay = rangeMonthDayInput ? parseInt(rangeMonthDayInput.value,10) : null;
         if(period==='monthly'){
-          if(!taskExecutionMonthDayValid(rangeStartMonth,rangeStartDay)){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的开始月日无效'); if(rangeStartDayInput) rangeStartDayInput.focus(); return false; }
-          if(!taskExecutionMonthDayValid(rangeEndMonth,rangeEndDay)){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束月日无效'); if(rangeEndDayInput) rangeEndDayInput.focus(); return false; }
-          var rangeStartKey = ('0'+rangeStartMonth).slice(-2)+'-'+('0'+rangeStartDay).slice(-2)+'T'+rangeStartValue;
-          var rangeEndKey = ('0'+rangeEndMonth).slice(-2)+'-'+('0'+rangeEndDay).slice(-2)+'T'+rangeEndValue;
-          if(rangeEndKey<=rangeStartKey){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束月日时间需晚于开始月日时间'); rangeEndInput.focus(); return false; }
+          if(!(rangeMonthDay>=1 && rangeMonthDay<=31)){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的执行日'); if(rangeMonthDayInput) rangeMonthDayInput.focus(); return false; }
+          if(rangeEndValue<=rangeStartValue){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束时间需晚于开始时间'); rangeEndInput.focus(); return false; }
         } else if(rangeEndValue<=rangeStartValue){ showToast('⚠️ 序号 '+(rangeNo+1)+' 的结束时间需晚于开始时间'); rangeEndInput.focus(); return false; }
         var rangeWeekdayValue = rangeWeekdayInput ? parseInt(rangeWeekdayInput.value,10) : null;
         if(period==='weekly' && !(rangeWeekdayValue>=0 && rangeWeekdayValue<=6)){ showToast('⚠️ 请选择序号 '+(rangeNo+1)+' 的星期'); if(rangeWeekdayInput) rangeWeekdayInput.focus(); return false; }
         executionRanges2.push({start:rangeStartValue, end:rangeEndValue, weekday:rangeWeekdayValue,
-          startMonth:rangeStartMonth, startDay:rangeStartDay, endMonth:rangeEndMonth, endDay:rangeEndDay});
+          monthDay:rangeMonthDay, startDay:rangeMonthDay, endDay:rangeMonthDay});
       }
     }
     /* v20.9.100 周期子选项 */
