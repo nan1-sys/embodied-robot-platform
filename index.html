@@ -35446,6 +35446,7 @@ function alarmAggregateRecords(records){
     group.primary = group.records.filter(function(r){ return r.level===group.highestLevel; })[0] || group.records[0] || {};
     group.robot = alarmFindRobot(group.deviceId);
     group.robotName = group.robot ? group.robot.name : (group.primary.deviceName || group.deviceId);
+    group.robotModel = group.robot ? (group.robot.model || '—') : (group.primary.robotModel || group.primary.deviceModel || '—');
     group.taskId = group.records.filter(function(r){ return !!r.taskId; }).map(function(r){ return r.taskId; })[0] || '';
     group.taskName = group.records.filter(function(r){ return !!r.taskName; }).map(function(r){ return r.taskName; })[0] || '';
     return group;
@@ -35457,6 +35458,7 @@ function renderAlarmMessage(){
   var kw = String(alarmMessageState.keyword||'').trim().toLowerCase();
   if(kw) list = list.filter(function(g){
     return String(g.robotName||'').toLowerCase().indexOf(kw)>-1
+      || String(g.robotModel||'').toLowerCase().indexOf(kw)>-1
       || String(g.deviceId||'').toLowerCase().indexOf(kw)>-1
       || g.records.some(function(r){
         return String(r.alarmName||'').toLowerCase().indexOf(kw)>-1
@@ -35493,6 +35495,7 @@ function renderAlarmMessage(){
     return '<tr>'
       + '<td>'+(start+idx+1)+'</td>'
       + '<td style="white-space:nowrap">'+esc(g.latestTime)+'</td>'
+      + '<td>'+esc(g.robotModel)+'</td>'
       + '<td>'+esc(g.robotName)+'</td>'
       + '<td class="alarm-name-cell">'+esc(g.primary.alarmName||'—')+'</td>'
       + '<td>'+content+'</td>'
@@ -35504,8 +35507,8 @@ function renderAlarmMessage(){
   var toolbar = '<div class="admin-table-toolbar"><div class="admin-table-title">告警日志（共 '+total+' 条）</div><div style="font-size:12px;color:#8c8c8c">数据来源：AIoT</div></div>';
   var pg = renderSimplePagination('goAlarmMessagePage',total,page,totalPages);
   return filterCard+'<div class="admin-table-card">'+toolbar
-    + '<div style="overflow-x:auto"><table class="admin-data-table" style="min-width:1080px;table-layout:fixed"><thead><tr><th style="width:50px">序号</th><th style="width:150px">告警时间</th><th style="width:175px">机器人</th><th style="width:150px">告警名称</th><th style="width:300px">告警内容</th><th style="width:90px">告警级别</th><th style="width:80px">告警数量</th><th style="width:70px">操作</th></tr></thead><tbody>'
-    + (rows||'<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:28px">暂无符合条件的告警日志</td></tr>')
+    + '<div style="overflow-x:auto"><table class="admin-data-table" style="min-width:1180px;table-layout:fixed"><thead><tr><th style="width:50px">序号</th><th style="width:150px">告警时间</th><th style="width:145px">机器人型号</th><th style="width:165px">机器人</th><th style="width:145px">告警名称</th><th style="width:275px">告警内容</th><th style="width:90px">告警级别</th><th style="width:80px">告警数量</th><th style="width:70px">操作</th></tr></thead><tbody>'
+    + (rows||'<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:28px">暂无符合条件的告警日志</td></tr>')
     + '</tbody></table></div>'+pg+'</div>';
 }
 function filterAlarmMessage(){
