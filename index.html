@@ -2854,8 +2854,8 @@ bdeploy-model-group { margin-bottom:8px; }
 .alarm-detail-content { margin-top:8px; font-size:16px; font-weight:600; color:#262626; line-height:1.55; }
 .alarm-detail-description { margin-top:4px; color:#595959; font-size:13px; line-height:1.55; }
 .alarm-detail-sub { margin-top:6px; color:#8c8c8c; font-size:13px; }
-.alarm-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; margin-top:16px; border:1px solid #e8e8e8; background:#e8e8e8; border-radius:8px; overflow:hidden; }
-.alarm-detail-field { min-height:66px; padding:12px 14px; background:#fff; box-sizing:border-box; }
+.alarm-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px 28px; margin-top:18px; }
+.alarm-detail-field { min-height:48px; padding:2px 0 4px; box-sizing:border-box; }
 .alarm-detail-field.wide { grid-column:1 / -1; }
 .alarm-detail-label { font-size:12px; color:#8c8c8c; margin-bottom:6px; }
 .alarm-detail-value { font-size:13px; color:#262626; line-height:1.5; word-break:break-word; }
@@ -35539,10 +35539,10 @@ function alarmOpenDetail(groupKey){
   closeAlarmDetail();
   var robot=group.robot;
   var location=robot ? [robot.city,robot.location].filter(Boolean).join(' · ') : '—';
-  var sn=robot ? robot.sn : group.deviceId;
+  var robotModel=robot ? (robot.model||'—') : '—';
   var taskValue=group.taskName||'—';
   var rawRows=group.records.map(function(r,idx){
-    return '<tr><td>'+(idx+1)+'</td><td style="white-space:nowrap">'+esc(r.time)+'</td><td>'+esc(r.alarmName||'—')+'</td><td><span class="alarm-level '+esc(r.level)+'">'+esc(alarmLevelText(r.level))+'</span></td><td>'+esc(r.content)+'</td></tr>';
+    return '<tr><td>'+(idx+1)+'</td><td style="white-space:nowrap">'+esc(r.time)+'</td><td>'+esc(r.alarmName||'—')+'</td><td>'+esc(r.content)+'</td><td><span class="alarm-level '+esc(r.level)+'">'+esc(alarmLevelText(r.level))+'</span></td></tr>';
   }).join('');
   var overlay=document.createElement('div');
   overlay.id='alarmDetailOverlay';
@@ -35554,15 +35554,14 @@ function alarmOpenDetail(groupKey){
     + '<div class="alarm-detail-hero"><span class="alarm-level '+esc(group.highestLevel)+'">'+esc(alarmLevelText(group.highestLevel))+'</span><div class="alarm-detail-hero-main"><div class="alarm-detail-content">'+esc(group.primary.alarmName||'—')+'</div><div class="alarm-detail-description">'+esc(group.primary.content||'—')+'</div><div class="alarm-detail-sub">同一设备同一触发批次共 '+group.records.length+' 条，列表按最高级别展示</div></div></div>'
     + '<div class="alarm-detail-grid">'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">机器人</div><div class="alarm-detail-value">'+esc(group.robotName)+'</div></div>'
-    + '<div class="alarm-detail-field"><div class="alarm-detail-label">AIoT 设备 ID</div><div class="alarm-detail-value">'+esc(group.deviceId)+'</div></div>'
-    + '<div class="alarm-detail-field"><div class="alarm-detail-label">设备编号</div><div class="alarm-detail-value">'+esc(sn)+'</div></div>'
+    + '<div class="alarm-detail-field"><div class="alarm-detail-label">机器人型号</div><div class="alarm-detail-value">'+esc(robotModel)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">位置</div><div class="alarm-detail-value">'+esc(location)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">首次告警时间</div><div class="alarm-detail-value">'+esc(group.firstTime)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">最近告警时间</div><div class="alarm-detail-value">'+esc(group.latestTime)+'</div></div>'
-    + '<div class="alarm-detail-field wide"><div class="alarm-detail-label">关联任务</div><div class="alarm-detail-value">'+esc(taskValue)+'</div></div>'
+    + '<div class="alarm-detail-field"><div class="alarm-detail-label">关联任务</div><div class="alarm-detail-value">'+esc(taskValue)+'</div></div>'
     + '</div>'
     + '<div class="alarm-detail-section-title">AIoT 原始告警记录（'+group.records.length+' 条）</div>'
-    + '<div class="alarm-detail-records"><table class="admin-data-table"><thead><tr><th style="width:64px">序号</th><th>告警时间</th><th>告警名称</th><th>级别</th><th>告警内容</th></tr></thead><tbody>'+rawRows+'</tbody></table></div>'
+    + '<div class="alarm-detail-records"><table class="admin-data-table"><thead><tr><th style="width:64px">序号</th><th>告警时间</th><th>告警名称</th><th>告警内容</th><th>告警级别</th></tr></thead><tbody>'+rawRows+'</tbody></table></div>'
     + '</div><div class="alarm-detail-foot"><button class="default" onclick="closeAlarmDetail()">关闭</button>'
     + (group.taskId?'<button class="default" onclick="alarmOpenTask(\''+esc(group.taskId)+'\')">查看关联任务</button>':'')
     + '<button class="primary" onclick="alarmOpenRobot(\''+esc(group.deviceId)+'\')">查看机器人</button></div></div>';
