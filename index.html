@@ -33330,8 +33330,8 @@ function taskPeriodChange(){
   var endHead = document.querySelector('.task-execution-end-head');
   if(wd) wd.style.display = (p==='weekly' && countMode!=='limited') ? 'block' : 'none';
   if(md) md.style.display = (p==='monthly' && countMode!=='limited') ? 'block' : 'none';
-  if(startHead) startHead.textContent = p==='monthly' ? '开始（月日时分）' : '开始时间';
-  if(endHead) endHead.textContent = p==='monthly' ? '结束（月日时分）' : '结束时间';
+  if(startHead) startHead.textContent = '开始时间';
+  if(endHead) endHead.textContent = '结束时间';
   if(countMode==='limited') taskBuildExecutionRanges();
   else taskSyncExecutionRangeWeekday();
   if(p!=='weekly') taskCloseWeekdayPanel();
@@ -33352,7 +33352,7 @@ function taskToggleSchedulePanel(panelId,triggerId,ev){
   trigger.classList.toggle('open',willOpen);
 }
 function taskCloseSchedulePanels(exceptPanelId){
-  var pairs = [['taskWeekdayPanel','taskWeekdayTrigger'],['taskMonthPanel','taskMonthTrigger'],['taskMonthlyWeekPanel','taskMonthlyWeekTrigger'],['taskMonthDayPanel','taskMonthDayTrigger']];
+  var pairs = [['taskWeekdayPanel','taskWeekdayTrigger'],['taskMonthlyOrdinalWeekPanel','taskMonthlyOrdinalWeekTrigger'],['taskMonthlyWeekPanel','taskMonthlyWeekTrigger'],['taskMonthDayPanel','taskMonthDayTrigger']];
   pairs.forEach(function(pair){
     if(pair[0]===exceptPanelId) return;
     var panel=document.getElementById(pair[0]), trigger=document.getElementById(pair[1]);
@@ -33367,8 +33367,8 @@ function taskCloseWeekdayPanel(){
   if(trigger) trigger.classList.remove('open');
 }
 function taskCloseMonthlyPanels(){
-  ['taskMonthPanel','taskMonthlyWeekPanel','taskMonthDayPanel'].forEach(function(id){ var panel=document.getElementById(id); if(panel) panel.classList.remove('open'); });
-  ['taskMonthTrigger','taskMonthlyWeekTrigger','taskMonthDayTrigger'].forEach(function(id){ var trigger=document.getElementById(id); if(trigger) trigger.classList.remove('open'); });
+  ['taskMonthlyOrdinalWeekPanel','taskMonthlyWeekPanel','taskMonthDayPanel'].forEach(function(id){ var panel=document.getElementById(id); if(panel) panel.classList.remove('open'); });
+  ['taskMonthlyOrdinalWeekTrigger','taskMonthlyWeekTrigger','taskMonthDayTrigger'].forEach(function(id){ var trigger=document.getElementById(id); if(trigger) trigger.classList.remove('open'); });
 }
 function taskSetWeekdayPreset(mode){
   var preset = mode==='workday' ? [0,1,2,3,4] : (mode==='weekend' ? [5,6] : [0,1,2,3,4,5,6]);
@@ -33396,27 +33396,27 @@ function taskMonthlyModeChange(){
   taskCloseMonthlyPanels();
 }
 function taskSetMonthlyGroup(group,checked){
-  var selector = group==='months' ? '#taskMonthOptions input[type=checkbox]' : (group==='weekdays' ? '#taskMonthlyWeekOptions input[type=checkbox]' : '#taskMonthDayOptions input[type=checkbox]');
+  var selector = group==='weeks' ? '#taskMonthlyOrdinalWeekOptions input[type=checkbox]' : (group==='weekdays' ? '#taskMonthlyWeekOptions input[type=checkbox]' : '#taskMonthDayOptions input[type=checkbox]');
   var inputs = document.querySelectorAll(selector);
   for(var i=0;i<inputs.length;i++) inputs[i].checked = !!checked;
   taskUpdateMonthlyUI();
 }
 function taskUpdateMonthlyUI(){
   var weekLabels = ['周一','周二','周三','周四','周五','周六','周日'];
-  var monthLabels = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  var ordinalLabels = ['第一周','第二周','第三周','第四周','第五周'];
   function selectedValues(selector){ return Array.prototype.slice.call(document.querySelectorAll(selector)).filter(function(c){ return c.checked; }).map(function(c){ return parseInt(c.value,10); }).sort(function(a,b){ return a-b; }); }
   function syncOptions(selector){ Array.prototype.slice.call(document.querySelectorAll(selector)).forEach(function(c){ var option=c.closest('.task-weekday-option'); if(option) option.classList.toggle('selected',c.checked); }); }
-  var months = selectedValues('#taskMonthOptions input[type=checkbox]');
+  var ordinalWeeks = selectedValues('#taskMonthlyOrdinalWeekOptions input[type=checkbox]');
   var weekDays = selectedValues('#taskMonthlyWeekOptions input[type=checkbox]');
   var monthDays = selectedValues('#taskMonthDayOptions input[type=checkbox]');
-  syncOptions('#taskMonthOptions input[type=checkbox]');
+  syncOptions('#taskMonthlyOrdinalWeekOptions input[type=checkbox]');
   syncOptions('#taskMonthlyWeekOptions input[type=checkbox]');
   syncOptions('#taskMonthDayOptions input[type=checkbox]');
-  var monthText=document.getElementById('taskMonthText');
+  var ordinalText=document.getElementById('taskMonthlyOrdinalWeekText');
   var weekText=document.getElementById('taskMonthlyWeekText');
   var dayText=document.getElementById('taskMonthDayText');
-  if(monthText) monthText.textContent=months.length ? months.map(function(v){ return monthLabels[v-1]; }).join('、') : '请选择月份';
-  if(weekText) weekText.textContent=weekDays.length===7 ? '每周' : (weekDays.length ? weekDays.map(function(v){ return weekLabels[v]; }).join('、') : '请选择星期');
+  if(ordinalText) ordinalText.textContent=ordinalWeeks.length===5 ? '每周' : (ordinalWeeks.length ? ordinalWeeks.map(function(v){ return ordinalLabels[v-1]; }).join('、') : '请选择周次');
+  if(weekText) weekText.textContent=weekDays.length===7 ? '每天' : (weekDays.length ? weekDays.map(function(v){ return weekLabels[v]; }).join('、') : '请选择星期');
   if(dayText) dayText.textContent=monthDays.length===31 ? '每天' : (monthDays.length ? monthDays.map(function(v){ return v+'号'; }).join('、') : '请选择日期');
 }
 /* v20.9.97 今日日期（yyyy-mm-dd），用于执行日期/起始日期默认值与禁用过去日期 */
