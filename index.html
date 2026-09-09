@@ -33235,7 +33235,7 @@ function taskOpenCreateModal(planId, copyMode){
   var monthlyWeekOptionsHtml = weekDayOrder.map(function(value){ var checked=monthlyWeekDays.indexOf(value)>-1; return '<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+value+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+weekDayLabels[value]+'</span></label>'; }).join('');
   var monthDayOptionsHtml = (function(){ var html=''; for(var day=1;day<=31;day++){ var checked=monthDaysVal.indexOf(day)>-1; html+='<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+day+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+day+'号</span></label>'; } return html; })();
   var monthlyOrdinalWeekText = monthlyWeeks.length===5 ? '每周' : monthlyWeeks.slice().sort(function(a,b){ return a-b; }).map(function(v){ return monthlyOrdinalLabels[v-1]; }).join('、');
-  var monthlyWeekText = monthlyWeekDays.length===7 ? '每周' : monthlyWeekDays.slice().sort(function(a,b){ return a-b; }).map(function(v){ return weekDayLabels[v]; }).join('、');
+  var monthlyWeekText = monthlyWeekDays.length===7 ? '每天' : monthlyWeekDays.slice().sort(function(a,b){ return a-b; }).map(function(v){ return weekDayLabels[v]; }).join('、');
   var monthDayText = monthDaysVal.length===31 ? '每天' : monthDaysVal.slice().sort(function(a,b){ return a-b; }).map(function(v){ return v+'号'; }).join('、');
   var tdStr = taskTodayStr();
   if(!startDateVal) startDateVal = tdStr;
@@ -33688,6 +33688,11 @@ function taskConfirmCreate(){
     var countMode = (document.querySelector('input[name="taskCountMode"]:checked')||{}).value || 'unlimited';
     var dailyCount2 = (countMode==='limited') ? (parseInt(document.getElementById('taskDailyCount').value||'1',10)||1) : '';
     var executionRanges2 = [];
+    if(countMode==='unlimited'){
+      if(!startTime2){ showToast('⚠️ 请选择开始时间'); return false; }
+      if(!endTime2){ showToast('⚠️ 请选择结束时间'); return false; }
+      if(endTime2<=startTime2){ showToast('⚠️ 结束时间需晚于开始时间'); return false; }
+    }
     if(countMode==='limited'){
       if(dailyCount2<1 || dailyCount2>20){ showToast('⚠️ 每周期执行次数需填写 1 至 20 的整数'); return false; }
       var rangeRows = Array.prototype.slice.call(document.querySelectorAll('#taskExecutionRanges .task-execution-range-row'));
