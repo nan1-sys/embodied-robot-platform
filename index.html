@@ -35747,23 +35747,23 @@ function taskSeedVideos(){
 }
 function taskSeedAlarmMessages(){
   return [
-    {id:'AIOT-ALM-20260909-001',batchId:'aiot-batch-0909-001',time:'2026-09-09 09:26:18',deviceId:'douzhuang-k1',level:'urgent',content:'驱动电机温度过高，当前温度 86℃',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
-    {id:'AIOT-ALM-20260909-002',batchId:'aiot-batch-0909-001',time:'2026-09-09 09:26:16',deviceId:'douzhuang-k1',level:'alarm',content:'定位信号持续波动，定位精度低于阈值',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
-    {id:'AIOT-ALM-20260909-003',batchId:'aiot-batch-0909-001',time:'2026-09-09 09:26:14',deviceId:'douzhuang-k1',level:'info',content:'机器人剩余电量低于 30%',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
-    {id:'AIOT-ALM-20260909-004',batchId:'aiot-batch-0909-002',time:'2026-09-09 09:12:40',deviceId:'douzhuang-k2',level:'alarm',content:'摄像头视频流中断',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
-    {id:'AIOT-ALM-20260909-005',batchId:'aiot-batch-0909-002',time:'2026-09-09 09:12:28',deviceId:'douzhuang-k2',level:'alarm',content:'摄像头视频流中断',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
-    {id:'AIOT-ALM-20260909-006',batchId:'aiot-batch-0909-003',time:'2026-09-09 08:58:05',deviceId:'ninghu-h1',level:'urgent',content:'机器人离线，心跳已中断 5 分钟',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260909-007',batchId:'aiot-batch-0909-003',time:'2026-09-09 08:57:48',deviceId:'ninghu-h1',level:'alarm',content:'网络连接连续超时',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260909-008',batchId:'aiot-batch-0909-004',time:'2026-09-09 08:42:31',deviceId:'taizhou-t2',level:'info',content:'机器人剩余电量低于 20%',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260909-009',batchId:'aiot-batch-0909-005',time:'2026-09-09 08:20:16',deviceId:'guangjing-g1',level:'alarm',content:'激光雷达数据异常',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260909-010',batchId:'aiot-batch-0909-006',time:'2026-09-09 07:55:04',deviceId:'runyang-r1',level:'info',content:'固件版本低于平台推荐版本',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260908-011',batchId:'aiot-batch-0908-001',time:'2026-09-08 17:36:22',deviceId:'taizhou-t1',level:'urgent',content:'急停按钮被触发',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260908-012',batchId:'aiot-batch-0908-002',time:'2026-09-08 16:10:08',deviceId:'ninghu-h2',level:'alarm',content:'左前关节执行器响应超时',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260908-013',batchId:'aiot-batch-0908-003',time:'2026-09-08 15:18:44',deviceId:'douzhuang-k1',level:'info',content:'充电任务未在预计时间内完成',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
-    {id:'AIOT-ALM-20260908-014',batchId:'aiot-batch-0908-004',time:'2026-09-08 13:42:19',deviceId:'guangjing-g1',level:'alarm',content:'环境传感器连续三次未返回数据',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260908-015',batchId:'aiot-batch-0908-005',time:'2026-09-08 11:05:37',deviceId:'taizhou-t2',level:'urgent',content:'机器人姿态角超过安全阈值',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260908-016',batchId:'aiot-batch-0908-006',time:'2026-09-08 09:30:12',deviceId:'runyang-r1',level:'info',content:'存储空间使用率超过 80%',taskId:'',taskName:''},
-    {id:'AIOT-ALM-20260907-017',batchId:'aiot-batch-0907-001',time:'2026-09-07 18:22:08',deviceId:'douzhuang-k2',level:'alarm',content:'充电桩连接失败',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'}
+    {id:'AIOT-ALM-20260909-001',batchId:'aiot-batch-0909-001',time:'2026-09-09 09:26:18',deviceId:'douzhuang-k1',alarmName:'驱动电机高温',level:'urgent',content:'驱动电机温度过高，当前温度 86℃',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
+    {id:'AIOT-ALM-20260909-002',batchId:'aiot-batch-0909-001',time:'2026-09-09 09:26:16',deviceId:'douzhuang-k1',alarmName:'定位信号异常',level:'alarm',content:'定位信号持续波动，定位精度低于阈值',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
+    {id:'AIOT-ALM-20260909-003',batchId:'aiot-batch-0909-001',time:'2026-09-09 09:26:14',deviceId:'douzhuang-k1',alarmName:'机器人电量不足',level:'info',content:'机器人剩余电量低于 30%',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
+    {id:'AIOT-ALM-20260909-004',batchId:'aiot-batch-0909-002',time:'2026-09-09 09:12:40',deviceId:'douzhuang-k2',alarmName:'视频流中断',level:'alarm',content:'摄像头视频流中断',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
+    {id:'AIOT-ALM-20260909-005',batchId:'aiot-batch-0909-002',time:'2026-09-09 09:12:28',deviceId:'douzhuang-k2',alarmName:'视频流中断',level:'alarm',content:'摄像头视频流中断',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
+    {id:'AIOT-ALM-20260909-006',batchId:'aiot-batch-0909-003',time:'2026-09-09 08:58:05',deviceId:'ninghu-h1',alarmName:'机器人离线',level:'urgent',content:'机器人离线，心跳已中断 5 分钟',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260909-007',batchId:'aiot-batch-0909-003',time:'2026-09-09 08:57:48',deviceId:'ninghu-h1',alarmName:'网络连接异常',level:'alarm',content:'网络连接连续超时',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260909-008',batchId:'aiot-batch-0909-004',time:'2026-09-09 08:42:31',deviceId:'taizhou-t2',alarmName:'机器人电量不足',level:'info',content:'机器人剩余电量低于 20%',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260909-009',batchId:'aiot-batch-0909-005',time:'2026-09-09 08:20:16',deviceId:'guangjing-g1',alarmName:'激光雷达异常',level:'alarm',content:'激光雷达数据异常',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260909-010',batchId:'aiot-batch-0909-006',time:'2026-09-09 07:55:04',deviceId:'runyang-r1',alarmName:'固件版本异常',level:'info',content:'固件版本低于平台推荐版本',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260908-011',batchId:'aiot-batch-0908-001',time:'2026-09-08 17:36:22',deviceId:'taizhou-t1',alarmName:'急停触发',level:'urgent',content:'急停按钮被触发',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260908-012',batchId:'aiot-batch-0908-002',time:'2026-09-08 16:10:08',deviceId:'ninghu-h2',alarmName:'关节执行器异常',level:'alarm',content:'左前关节执行器响应超时',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260908-013',batchId:'aiot-batch-0908-003',time:'2026-09-08 15:18:44',deviceId:'douzhuang-k1',alarmName:'充电任务超时',level:'info',content:'充电任务未在预计时间内完成',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'},
+    {id:'AIOT-ALM-20260908-014',batchId:'aiot-batch-0908-004',time:'2026-09-08 13:42:19',deviceId:'guangjing-g1',alarmName:'传感器数据异常',level:'alarm',content:'环境传感器连续三次未返回数据',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260908-015',batchId:'aiot-batch-0908-005',time:'2026-09-08 11:05:37',deviceId:'taizhou-t2',alarmName:'机器人姿态异常',level:'urgent',content:'机器人姿态角超过安全阈值',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260908-016',batchId:'aiot-batch-0908-006',time:'2026-09-08 09:30:12',deviceId:'runyang-r1',alarmName:'存储空间不足',level:'info',content:'存储空间使用率超过 80%',taskId:'',taskName:''},
+    {id:'AIOT-ALM-20260907-017',batchId:'aiot-batch-0907-001',time:'2026-09-07 18:22:08',deviceId:'douzhuang-k2',alarmName:'充电连接失败',level:'alarm',content:'充电桩连接失败',taskId:'tp_seed_1',taskName:'窦庄充电桩每日巡检'}
   ];
 }
 function taskSeedRobotLogs(){
