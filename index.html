@@ -32900,7 +32900,7 @@ var historyPhotoState = { page:1, pageSize:12, keyword:'', date:'' };
 var historyVideoState = { page:1, pageSize:12, keyword:'', date:'' };
 var robotLogState = { page:1, pageSize:12, keyword:'', date:'' };
 var commandLogState = { page:1, pageSize:12, keyword:'', date:'' };
-var alarmMessageState = { page:1, pageSize:10, keyword:'', robotId:'', level:'', date:'' };
+var alarmMessageState = { page:1, pageSize:10, robotId:'', level:'', date:'' };
 
 var taskArrangeFilteredList = null;
 var taskRecordFilteredList = null;
@@ -35456,16 +35456,6 @@ function alarmAggregateRecords(records){
 function renderAlarmMessage(){
   taskLoadAll();
   var list = alarmAggregateRecords(alarmMessages);
-  var kw = String(alarmMessageState.keyword||'').trim().toLowerCase();
-  if(kw) list = list.filter(function(g){
-    return String(g.robotName||'').toLowerCase().indexOf(kw)>-1
-      || String(g.robotModel||'').toLowerCase().indexOf(kw)>-1
-      || String(g.deviceId||'').toLowerCase().indexOf(kw)>-1
-      || g.records.some(function(r){
-        return String(r.alarmName||'').toLowerCase().indexOf(kw)>-1
-          || String(r.content||'').toLowerCase().indexOf(kw)>-1;
-      });
-  });
   if(alarmMessageState.robotId) list = list.filter(function(g){ return g.deviceId===alarmMessageState.robotId; });
   if(alarmMessageState.level) list = list.filter(function(g){ return g.highestLevel===alarmMessageState.level; });
   if(alarmMessageState.date) list = list.filter(function(g){ return String(g.latestTime||'').slice(0,10)===alarmMessageState.date; });
@@ -35484,7 +35474,6 @@ function renderAlarmMessage(){
     return '<option value="'+esc(r.id)+'" '+(alarmMessageState.robotId===r.id?'selected':'')+'>'+esc(r.name)+'</option>';
   }).join('');
   var filterCard = '<div class="admin-filter-card"><div class="admin-filter-row">'
-    + '<div class="admin-filter-item"><label>关键词</label><input style="width:210px" type="text" id="amFilterKeyword" placeholder="机器人、告警名称或内容" value="'+esc(alarmMessageState.keyword)+'"></div>'
     + '<div class="admin-filter-item"><label>机器人</label><select style="width:190px" id="amFilterRobot"><option value="">全部</option>'+robotOptions+'</select></div>'
     + '<div class="admin-filter-item"><label>级别</label><select style="width:105px" id="amFilterLevel"><option value="">全部</option><option value="info" '+(alarmMessageState.level==='info'?'selected':'')+'>信息</option><option value="alarm" '+(alarmMessageState.level==='alarm'?'selected':'')+'>告警</option><option value="urgent" '+(alarmMessageState.level==='urgent'?'selected':'')+'>紧急</option></select></div>'
     + '<div class="admin-filter-item"><label>告警时间</label><input style="width:145px" type="date" id="amFilterDate" value="'+esc(alarmMessageState.date)+'"></div>'
@@ -35514,7 +35503,6 @@ function renderAlarmMessage(){
 }
 function filterAlarmMessage(){
   function value(id){ var el=document.getElementById(id); return el ? el.value : ''; }
-  alarmMessageState.keyword=String(value('amFilterKeyword')||'').trim();
   alarmMessageState.robotId=value('amFilterRobot');
   alarmMessageState.level=value('amFilterLevel');
   alarmMessageState.date=value('amFilterDate');
@@ -35522,7 +35510,7 @@ function filterAlarmMessage(){
   switchAdminMenu('log','log-alarm');
 }
 function resetAlarmMessageFilter(){
-  alarmMessageState={page:1,pageSize:10,keyword:'',robotId:'',level:'',date:''};
+  alarmMessageState={page:1,pageSize:10,robotId:'',level:'',date:''};
   switchAdminMenu('log','log-alarm');
 }
 function goAlarmMessagePage(p){
