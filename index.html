@@ -2854,6 +2854,7 @@ bdeploy-model-group { margin-bottom:8px; }
 .alarm-detail-sub { margin-top:6px; color:#8c8c8c; font-size:13px; }
 .alarm-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; margin-top:16px; border:1px solid #e8e8e8; background:#e8e8e8; border-radius:8px; overflow:hidden; }
 .alarm-detail-field { min-height:66px; padding:12px 14px; background:#fff; box-sizing:border-box; }
+.alarm-detail-field.wide { grid-column:1 / -1; }
 .alarm-detail-label { font-size:12px; color:#8c8c8c; margin-bottom:6px; }
 .alarm-detail-value { font-size:13px; color:#262626; line-height:1.5; word-break:break-word; }
 .alarm-detail-section-title { margin:20px 0 10px; font-size:14px; font-weight:600; color:#262626; }
@@ -2863,7 +2864,7 @@ bdeploy-model-group { margin-bottom:8px; }
 .alarm-detail-foot button { height:34px; padding:0 16px; border-radius:6px; font-size:13px; cursor:pointer; }
 .alarm-detail-foot .default { color:#595959; border:1px solid #d9d9d9; background:#fff; }
 .alarm-detail-foot .primary { color:#fff; border:1px solid #1890ff; background:#1890ff; }
-@media (max-width:760px){ .alarm-detail-grid{grid-template-columns:1fr 1fr;} .alarm-detail-overlay{padding:10px;} }
+@media (max-width:760px){ .alarm-detail-grid{grid-template-columns:1fr 1fr;} .alarm-detail-field.wide{grid-column:1 / -1;} .alarm-detail-overlay{padding:10px;} }
 
 /* r77 公共 */
 .view-toggle-group { display:inline-flex; border:1px solid #d9d9d9; border-radius:4px; overflow:hidden; }
@@ -35534,8 +35535,8 @@ function alarmOpenDetail(groupKey){
   var location=robot ? [robot.city,robot.location].filter(Boolean).join(' · ') : '—';
   var sn=robot ? robot.sn : group.deviceId;
   var taskValue=group.taskName||'—';
-  var rawRows=group.records.map(function(r){
-    return '<tr><td style="white-space:nowrap">'+esc(r.id)+'</td><td style="white-space:nowrap">'+esc(r.time)+'</td><td><span class="alarm-level '+esc(r.level)+'">'+esc(alarmLevelText(r.level))+'</span></td><td>'+esc(r.content)+'</td></tr>';
+  var rawRows=group.records.map(function(r,idx){
+    return '<tr><td>'+(idx+1)+'</td><td style="white-space:nowrap">'+esc(r.time)+'</td><td><span class="alarm-level '+esc(r.level)+'">'+esc(alarmLevelText(r.level))+'</span></td><td>'+esc(r.content)+'</td></tr>';
   }).join('');
   var overlay=document.createElement('div');
   overlay.id='alarmDetailOverlay';
@@ -35552,10 +35553,10 @@ function alarmOpenDetail(groupKey){
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">位置</div><div class="alarm-detail-value">'+esc(location)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">首次告警时间</div><div class="alarm-detail-value">'+esc(group.firstTime)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">最近告警时间</div><div class="alarm-detail-value">'+esc(group.latestTime)+'</div></div>'
-    + '<div class="alarm-detail-field"><div class="alarm-detail-label">关联任务</div><div class="alarm-detail-value">'+esc(taskValue)+'</div></div>'
+    + '<div class="alarm-detail-field wide"><div class="alarm-detail-label">关联任务</div><div class="alarm-detail-value">'+esc(taskValue)+'</div></div>'
     + '</div>'
     + '<div class="alarm-detail-section-title">AIoT 原始告警记录（'+group.records.length+' 条）</div>'
-    + '<div class="alarm-detail-records"><table class="admin-data-table"><thead><tr><th>记录 ID</th><th>告警时间</th><th>级别</th><th>告警内容</th></tr></thead><tbody>'+rawRows+'</tbody></table></div>'
+    + '<div class="alarm-detail-records"><table class="admin-data-table"><thead><tr><th style="width:64px">序号</th><th>告警时间</th><th>级别</th><th>告警内容</th></tr></thead><tbody>'+rawRows+'</tbody></table></div>'
     + '</div><div class="alarm-detail-foot"><button class="default" onclick="closeAlarmDetail()">关闭</button>'
     + (group.taskId?'<button class="default" onclick="alarmOpenTask(\''+esc(group.taskId)+'\')">查看关联任务</button>':'')
     + '<button class="primary" onclick="alarmOpenRobot(\''+esc(group.deviceId)+'\')">查看机器人</button></div></div>';
