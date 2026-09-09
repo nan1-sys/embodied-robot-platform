@@ -33457,8 +33457,8 @@ function taskTypeChange(){
     var wks = document.querySelectorAll('#taskWeeklyDays input[type=checkbox]');
     for(var wi=0;wi<wks.length;wi++) wks[wi].checked = true;
     taskUpdateWeekdayUI();
-    var monthChecks = document.querySelectorAll('#taskMonthOptions input[type=checkbox]');
-    for(var mi=0;mi<monthChecks.length;mi++) monthChecks[mi].checked = true;
+    var monthlyOrdinalChecks = document.querySelectorAll('#taskMonthlyOrdinalWeekOptions input[type=checkbox]');
+    for(var moi=0;moi<monthlyOrdinalChecks.length;moi++) monthlyOrdinalChecks[moi].checked = true;
     var monthlyWeekChecks = document.querySelectorAll('#taskMonthlyWeekOptions input[type=checkbox]');
     for(var mwi=0;mwi<monthlyWeekChecks.length;mwi++) monthlyWeekChecks[mwi].checked = true;
     var monthDayChecks = document.querySelectorAll('#taskMonthDayOptions input[type=checkbox]');
