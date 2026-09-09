@@ -33369,6 +33369,20 @@ function taskUpdateMonthlyUI(){
   var monthDays = selectedValues('#taskMonthDayOptions input[type=checkbox]');
   syncOptions('#taskMonthDayOptions input[type=checkbox]');
   var dayText=document.getElementById('taskMonthDayText');
+  var periodSelect=document.getElementById('taskPeriod');
+  var countMode=(document.querySelector('input[name="taskCountMode"]:checked')||{}).value || 'unlimited';
+  if(monthDays.length===31 && periodSelect && periodSelect.value==='monthly' && countMode==='unlimited'){
+    periodSelect.value='daily';
+    var effectiveDate=(document.getElementById('taskStartDate')||{}).value || taskTodayStr();
+    var defaultDay=parseInt(effectiveDate.slice(8,10),10) || 1;
+    var inputs=document.querySelectorAll('#taskMonthDayOptions input[type=checkbox]');
+    for(var i=0;i<inputs.length;i++) inputs[i].checked=parseInt(inputs[i].value,10)===defaultDay;
+    syncOptions('#taskMonthDayOptions input[type=checkbox]');
+    if(dayText) dayText.textContent=defaultDay+'号';
+    taskPeriodChange();
+    showToast('ℹ️ 已选择全部日期，执行配置已自动切换为每日');
+    return;
+  }
   if(dayText) dayText.textContent=monthDays.length===31 ? '每天' : (monthDays.length ? monthDays.map(function(v){ return v+'号'; }).join('、') : '请选择日期');
 }
 /* v20.9.97 今日日期（yyyy-mm-dd），用于执行日期/起始日期默认值与禁用过去日期 */
@@ -33672,6 +33686,7 @@ function taskConfirmCreate(){
     var monthlyWeeks2 = [];
     var monthlyWeekDays2 = [];
     var monthDays = Array.prototype.slice.call(document.querySelectorAll('#taskMonthDayOptions input[type=checkbox]:checked')).map(function(c){ return parseInt(c.value,10); });
+    if(period==='monthly' && countMode==='unlimited' && monthDays.length===31) period='daily';
     var startDate2 = document.getElementById('taskStartDate').value;
     if(period==='monthly' && countMode==='limited'){
       monthlyMode2 = 'date';
