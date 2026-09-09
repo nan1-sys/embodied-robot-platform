@@ -2859,7 +2859,8 @@ bdeploy-model-group { margin-bottom:8px; }
 .alarm-detail-field.wide { grid-column:1 / -1; }
 .alarm-detail-label { font-size:12px; color:#8c8c8c; margin-bottom:6px; }
 .alarm-detail-value { font-size:13px; color:#262626; line-height:1.5; word-break:break-word; }
-.alarm-detail-section-title { margin:20px 0 10px; font-size:14px; font-weight:600; color:#262626; }
+.alarm-detail-section-title { display:flex; align-items:baseline; flex-wrap:wrap; gap:8px; margin:20px 0 10px; font-size:14px; font-weight:600; color:#262626; }
+.alarm-detail-section-note { color:#8c8c8c; font-size:12px; font-weight:400; }
 .alarm-detail-records { border:1px solid #e8e8e8; border-radius:8px; overflow:auto; }
 .alarm-detail-records .admin-data-table { min-width:760px; }
 .alarm-detail-foot { display:flex; justify-content:flex-end; gap:10px; padding:14px 22px; border-top:1px solid #e8e8e8; background:#fafafa; }
@@ -35551,7 +35552,7 @@ function alarmOpenDetail(groupKey){
   overlay.innerHTML='<div class="alarm-detail-modal" role="dialog" aria-modal="true" aria-label="告警详情">'
     + '<div class="alarm-detail-head"><div class="alarm-detail-title">告警详情</div><button class="alarm-detail-close" onclick="closeAlarmDetail()">×</button></div>'
     + '<div class="alarm-detail-body">'
-    + '<div class="alarm-detail-hero"><span class="alarm-level '+esc(group.highestLevel)+'">'+esc(alarmLevelText(group.highestLevel))+'</span><div class="alarm-detail-hero-main"><div class="alarm-detail-content">'+esc(group.primary.alarmName||'—')+'</div><div class="alarm-detail-description">'+esc(group.primary.content||'—')+'</div><div class="alarm-detail-sub">同一设备同一触发批次共 '+group.records.length+' 条，列表按最高级别展示</div></div></div>'
+    + '<div class="alarm-detail-hero"><span class="alarm-level '+esc(group.highestLevel)+'">'+esc(alarmLevelText(group.highestLevel))+'</span><div class="alarm-detail-hero-main"><div class="alarm-detail-content">'+esc(group.primary.alarmName||'—')+'</div><div class="alarm-detail-description">'+esc(group.primary.content||'—')+'</div></div></div>'
     + '<div class="alarm-detail-grid">'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">机器人</div><div class="alarm-detail-value">'+esc(group.robotName)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">机器人型号</div><div class="alarm-detail-value">'+esc(robotModel)+'</div></div>'
@@ -35560,7 +35561,7 @@ function alarmOpenDetail(groupKey){
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">最近告警时间</div><div class="alarm-detail-value">'+esc(group.latestTime)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">关联任务</div><div class="alarm-detail-value">'+esc(taskValue)+'</div></div>'
     + '</div>'
-    + '<div class="alarm-detail-section-title">AIoT 原始告警记录（'+group.records.length+' 条）</div>'
+    + '<div class="alarm-detail-section-title"><span>AIoT 原始告警记录（'+group.records.length+' 条）</span><span class="alarm-detail-section-note">同一设备同一触发批次，列表按最高级别展示</span></div>'
     + '<div class="alarm-detail-records"><table class="admin-data-table"><thead><tr><th style="width:64px">序号</th><th>告警时间</th><th>告警名称</th><th>告警内容</th><th>告警级别</th></tr></thead><tbody>'+rawRows+'</tbody></table></div>'
     + '</div><div class="alarm-detail-foot"><button class="default" onclick="closeAlarmDetail()">关闭</button>'
     + (group.taskId?'<button class="default" onclick="alarmOpenTask(\''+esc(group.taskId)+'\')">查看关联任务</button>':'')
