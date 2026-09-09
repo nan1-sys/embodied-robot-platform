@@ -2835,15 +2835,13 @@ bdeploy-model-group { margin-bottom:8px; }
 .cmd-dir.down { background:#dbeafe; color:#1d4ed8; }
 .cmd-dir.up { background:#dcfce7; color:#16a34a; }
 
-/* AIoT 机器人告警消息 */
+/* AIoT 机器人告警日志 */
 .alarm-level { display:inline-flex; align-items:center; justify-content:center; min-width:44px; height:24px; padding:0px 9px; border-radius:4px; font-size:12px; font-weight:600; box-sizing:border-box; }
 .alarm-level.info { color:#1677ff; background:#e6f4ff; border:1px solid #91caff; }
 .alarm-level.alarm { color:#d46b08; background:#fff7e6; border:1px solid #ffd591; }
 .alarm-level.urgent { color:#cf1322; background:#fff1f0; border:1px solid #ffa39e; }
 .alarm-content-main { color:#262626; line-height:1.5; }
 .alarm-content-more { color:#8c8c8c; font-size:12px; margin-top:2px; }
-.alarm-robot-link { color:#1677ff; cursor:pointer; font-weight:500; }
-.alarm-robot-link:hover { text-decoration:underline; }
 .alarm-detail-overlay { position:fixed; inset:0; z-index:10020; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(15,23,42,.52); box-sizing:border-box; }
 .alarm-detail-modal { width:min(920px,94vw); max-height:90vh; background:#fff; border-radius:12px; box-shadow:0 24px 72px rgba(15,23,42,.28); overflow:hidden; display:flex; flex-direction:column; }
 .alarm-detail-head { display:flex; align-items:center; justify-content:space-between; padding:17px 22px; border-bottom:1px solid #e8e8e8; }
@@ -4179,7 +4177,7 @@ bdeploy-model-group { margin-bottom:8px; }
               <div class="admin-sub-list">
                 <div class="admin-sub-item" data-admin-sub="log-robot" onclick="switchAdminMenu('log','log-robot',event)">机器人日志</div>
                 <div class="admin-sub-item" data-admin-sub="log-command" onclick="switchAdminMenu('log','log-command',event)">指令日志</div>
-                <div class="admin-sub-item" data-admin-sub="log-alarm" onclick="switchAdminMenu('log','log-alarm',event)">告警消息</div>
+                <div class="admin-sub-item" data-admin-sub="log-alarm" onclick="switchAdminMenu('log','log-alarm',event)">告警日志</div>
               </div>
             </div>
           </div>
@@ -26496,7 +26494,7 @@ const ADMIN_MENU_META = {
     subs:{
       'log-robot':{ name:'机器人日志', desc:'查看机器人运行、任务执行与异常日志，按任务关联展示。', panel:'', actions:[] },
       'log-command':{ name:'指令日志', desc:'查看平台下发给机器人的指令与机器人回传的上传数据。', panel:'', actions:[] },
-      'log-alarm':{ name:'告警消息', desc:'查询由 AIoT 推送的机器人告警消息。', panel:'', actions:[] }
+      'log-alarm':{ name:'告警日志', desc:'查询由 AIoT 推送的机器人告警日志。', panel:'', actions:[] }
     }
   }
 };
@@ -35510,7 +35508,7 @@ function renderAlarmMessage(){
       + '<td>'+(start+idx+1)+'</td>'
       + '<td style="white-space:nowrap">'+esc(g.latestTime)+'</td>'
       + '<td><span class="alarm-level '+esc(g.highestLevel)+'">'+esc(alarmLevelText(g.highestLevel))+'</span></td>'
-      + '<td><span class="alarm-robot-link" onclick="alarmOpenRobot(\''+esc(g.deviceId)+'\')">'+esc(g.robotName)+'</span><div class="alarm-content-more">'+esc(g.deviceId)+'</div></td>'
+      + '<td>'+esc(g.robotName)+'</td>'
       + '<td>'+content+'</td>'
       + '<td style="white-space:nowrap">'+g.records.length+' 条</td>'
       + '<td>'+alarmStatusBadge('process',g.processStatus)+'</td>'
@@ -35518,11 +35516,11 @@ function renderAlarmMessage(){
       + '<td><button class="admin-mini-btn ghost" onclick="alarmOpenDetail(\''+esc(g.key)+'\')">查看</button></td>'
       + '</tr>';
   }).join('');
-  var toolbar = '<div class="admin-table-toolbar"><div class="admin-table-title">告警消息（共 '+total+' 条）</div><div style="font-size:12px;color:#8c8c8c">数据来源：AIoT</div></div>';
+  var toolbar = '<div class="admin-table-toolbar"><div class="admin-table-title">告警日志（共 '+total+' 条）</div><div style="font-size:12px;color:#8c8c8c">数据来源：AIoT</div></div>';
   var pg = renderSimplePagination('goAlarmMessagePage',total,page,totalPages);
   return filterCard+'<div class="admin-table-card">'+toolbar
     + '<div style="overflow-x:auto"><table class="admin-data-table" style="min-width:1120px"><thead><tr><th style="width:50px">序号</th><th style="width:150px">告警时间</th><th style="width:80px">告警级别</th><th style="width:185px">机器人</th><th>告警内容</th><th style="width:80px">告警数量</th><th style="width:95px">处理状态</th><th style="width:95px">推送状态</th><th style="width:70px">操作</th></tr></thead><tbody>'
-    + (rows||'<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:28px">暂无符合条件的告警消息</td></tr>')
+    + (rows||'<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:28px">暂无符合条件的告警日志</td></tr>')
     + '</tbody></table></div>'+pg+'</div>';
 }
 function filterAlarmMessage(){
