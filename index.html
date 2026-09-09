@@ -33522,11 +33522,17 @@ function taskCountModeChange(){
 function taskSyncExecutionRangeWeekday(){
   var period = (document.getElementById('taskPeriod')||{}).value || 'daily';
   var countMode = (document.querySelector('input[name="taskCountMode"]:checked')||{}).value || 'unlimited';
-  var show = period==='weekly' && countMode==='limited';
+  var showWeekday = period==='weekly' && countMode==='limited';
+  var showMonthDay = period==='monthly' && countMode==='limited';
   var head = document.querySelector('.task-execution-weekday-head');
-  if(head) head.style.display = show ? 'block' : 'none';
+  var monthDayHead = document.querySelector('.task-execution-monthday-head');
+  if(head) head.style.display = showWeekday ? 'block' : 'none';
+  if(monthDayHead) monthDayHead.style.display = showMonthDay ? 'block' : 'none';
   Array.prototype.slice.call(document.querySelectorAll('.task-execution-weekday')).forEach(function(select){
-    select.style.display = show ? 'block' : 'none';
+    select.style.display = showWeekday ? 'block' : 'none';
+  });
+  Array.prototype.slice.call(document.querySelectorAll('.task-execution-month-day')).forEach(function(select){
+    select.style.display = showMonthDay ? 'block' : 'none';
   });
 }
 function taskExecutionTimePart(value, fallback){
@@ -33588,25 +33594,17 @@ function taskExecutionRangeRowHtml(index, values, period){
     for(var number=1;number<=max;number++) html += '<option value="'+number+'" '+(number===selected?'selected':'')+'>'+('0'+number).slice(-2)+suffix+'</option>';
     return html;
   }
-  var startMonth = parseInt(values.startMonth,10)||1, startDay = parseInt(values.startDay,10)||1;
-  var endMonth = parseInt(values.endMonth,10)||startMonth, endDay = parseInt(values.endDay,10)||startDay;
-  var startControls = period==='monthly'
-    ? '<select class="task-execution-start-month" aria-label="第'+(index+1)+'次开始月份" style="width:52px;flex:0 0 52px;border:0;background:transparent;padding:8px 2px;font-size:12px;color:#334155;outline:none;">'+numberOptions(12,startMonth,'月')+'</select>'
-      + '<select class="task-execution-start-day" aria-label="第'+(index+1)+'次开始日期" style="width:52px;flex:0 0 52px;border:0;background:transparent;padding:8px 2px;font-size:12px;color:#334155;outline:none;">'+numberOptions(31,startDay,'日')+'</select>'
-      + '<input type="time" class="task-execution-range-start" style="flex:1;min-width:72px;border:0;background:transparent;padding:8px 3px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始时间">'
-    : '<input type="time" class="task-execution-range-start" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始时间">';
-  var endControls = period==='monthly'
-    ? '<select class="task-execution-end-month" aria-label="第'+(index+1)+'次结束月份" style="width:52px;flex:0 0 52px;border:0;background:transparent;padding:8px 2px;font-size:12px;color:#334155;outline:none;">'+numberOptions(12,endMonth,'月')+'</select>'
-      + '<select class="task-execution-end-day" aria-label="第'+(index+1)+'次结束日期" style="width:52px;flex:0 0 52px;border:0;background:transparent;padding:8px 2px;font-size:12px;color:#334155;outline:none;">'+numberOptions(31,endDay,'日')+'</select>'
-      + '<input type="time" class="task-execution-range-end" style="flex:1;min-width:72px;border:0;background:transparent;padding:8px 3px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束时间">'
-    : '<input type="time" class="task-execution-range-end" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束时间">';
+  var monthDay = parseInt(values.monthDay||values.startDay,10)||1;
+  var startControls = '<input type="time" class="task-execution-range-start" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.start||'')+'" aria-label="第'+(index+1)+'次开始时间">';
+  var endControls = '<input type="time" class="task-execution-range-end" style="flex:1;min-width:0;border:0;background:transparent;padding:8px 9px;font-size:12px;color:#334155;outline:none;" value="'+esc(values.end||'')+'" aria-label="第'+(index+1)+'次结束时间">';
   return '<div class="task-execution-range-row" style="display:flex;align-items:center;gap:10px;margin-top:8px;">'
     + '<span style="width:48px;flex:0 0 48px;font-size:13px;color:#475569;text-align:center;">'+(index+1)+'</span>'
     + '<select class="task-execution-weekday" aria-label="第'+(index+1)+'次执行星期" style="width:82px;flex:0 0 82px;height:34px;border:1px solid #d1d5db;border-radius:6px;background:#fff;padding:0 7px;font-size:12px;color:#334155;outline:none;display:'+(period==='weekly'?'block':'none')+';">'+weekdayOptions+'</select>'
+    + '<select class="task-execution-month-day" aria-label="第'+(index+1)+'次执行日期" style="width:82px;flex:0 0 82px;height:34px;border:1px solid #d1d5db;border-radius:6px;background:#fff;padding:0 7px;font-size:12px;color:#334155;outline:none;display:'+(period==='monthly'?'block':'none')+';">'+numberOptions(31,monthDay,'日')+'</select>'
     + '<div style="flex:1;min-width:0;display:flex;align-items:center;border:1px solid #d1d5db;border-radius:6px;background:#fff;overflow-x:auto;">'
-    + '<div style="flex:1;min-width:'+(period==='monthly'?'178px':'0')+';display:flex;align-items:center;">'+startControls+'</div>'
+    + '<div style="flex:1;min-width:0;display:flex;align-items:center;">'+startControls+'</div>'
     + '<span style="flex:0 0 auto;padding:0 5px;color:#94a3b8;font-size:12px;">至</span>'
-    + '<div style="flex:1;min-width:'+(period==='monthly'?'178px':'0')+';display:flex;align-items:center;">'+endControls+'</div>'
+    + '<div style="flex:1;min-width:0;display:flex;align-items:center;">'+endControls+'</div>'
     + '</div></div>';
 }
 function taskExecutionRangeDefault(weekday, fallbackDate){
