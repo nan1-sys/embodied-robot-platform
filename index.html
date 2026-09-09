@@ -4177,9 +4177,9 @@ bdeploy-model-group { margin-bottom:8px; }
               <div class="admin-menu-main" onclick="toggleAdminMenuGroup('log',event)"><span class="admin-menu-icon">📝</span><span class="admin-menu-text">日志监控</span><span class="admin-menu-chevron">▾</span></div>
               <div class="admin-menu-desc" style="display:none"></div>
               <div class="admin-sub-list">
-                <div class="admin-sub-item" data-admin-sub="log-alarm" onclick="switchAdminMenu('log','log-alarm',event)">告警消息</div>
                 <div class="admin-sub-item" data-admin-sub="log-robot" onclick="switchAdminMenu('log','log-robot',event)">机器人日志</div>
                 <div class="admin-sub-item" data-admin-sub="log-command" onclick="switchAdminMenu('log','log-command',event)">指令日志</div>
+                <div class="admin-sub-item" data-admin-sub="log-alarm" onclick="switchAdminMenu('log','log-alarm',event)">告警消息</div>
               </div>
             </div>
           </div>
@@ -26494,9 +26494,9 @@ const ADMIN_MENU_META = {
   log: {
     name:'日志监控',
     subs:{
-      'log-alarm':{ name:'告警消息', desc:'查询由 AIoT 推送的机器人告警消息。', panel:'', actions:[] },
       'log-robot':{ name:'机器人日志', desc:'查看机器人运行、任务执行与异常日志，按任务关联展示。', panel:'', actions:[] },
-      'log-command':{ name:'指令日志', desc:'查看平台下发给机器人的指令与机器人回传的上传数据。', panel:'', actions:[] }
+      'log-command':{ name:'指令日志', desc:'查看平台下发给机器人的指令与机器人回传的上传数据。', panel:'', actions:[] },
+      'log-alarm':{ name:'告警消息', desc:'查询由 AIoT 推送的机器人告警消息。', panel:'', actions:[] }
     }
   }
 };
