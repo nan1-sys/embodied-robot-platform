@@ -35479,8 +35479,7 @@ function renderAlarmMessage(){
     + '<div class="admin-filter-item"><label>关键词</label><input style="width:210px" type="text" id="amFilterKeyword" placeholder="机器人、设备ID或告警内容" value="'+esc(alarmMessageState.keyword)+'"></div>'
     + '<div class="admin-filter-item"><label>机器人</label><select style="width:190px" id="amFilterRobot"><option value="">全部</option>'+robotOptions+'</select></div>'
     + '<div class="admin-filter-item"><label>级别</label><select style="width:105px" id="amFilterLevel"><option value="">全部</option><option value="info" '+(alarmMessageState.level==='info'?'selected':'')+'>信息</option><option value="alarm" '+(alarmMessageState.level==='alarm'?'selected':'')+'>告警</option><option value="urgent" '+(alarmMessageState.level==='urgent'?'selected':'')+'>紧急</option></select></div>'
-    + '<div class="admin-filter-item"><label>开始日期</label><input style="width:145px" type="date" id="amFilterStartDate" value="'+esc(alarmMessageState.startDate)+'"></div>'
-    + '<div class="admin-filter-item"><label>结束日期</label><input style="width:145px" type="date" id="amFilterEndDate" value="'+esc(alarmMessageState.endDate)+'"></div>'
+    + '<div class="admin-filter-item"><label>告警时间</label><input style="width:145px" type="date" id="amFilterStartDate" value="'+esc(alarmMessageState.startDate)+'"><span style="color:#8c8c8c">至</span><input style="width:145px" type="date" id="amFilterEndDate" value="'+esc(alarmMessageState.endDate)+'"></div>'
     + '<div class="admin-filter-btns"><button class="admin-filter-btn primary" onclick="filterAlarmMessage()">搜索</button><button class="admin-filter-btn default" onclick="resetAlarmMessageFilter()">重置</button></div>'
     + '</div></div>';
   var rows = pageList.map(function(g,idx){
