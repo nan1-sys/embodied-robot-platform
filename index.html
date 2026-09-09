@@ -33278,7 +33278,7 @@ function taskOpenCreateModal(planId, copyMode){
     + '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="radio" name="taskCountMode" value="limited" '+(countModeVal==='limited'?'checked':'')+' onchange="taskCountModeChange()"> 限次</label>'
     + '</div>'
     + '<div id="taskDailyCountWrap" style="display:'+(countModeVal==='limited'?'block':'none')+';padding:10px 12px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;">'
-    + '<input id="taskDailyCount" class="pa-input" style="margin:0;" type="number" min="1" max="20" value="'+dailyCount+'" placeholder="请输入次数" oninput="taskBuildExecutionRanges()">'
+    + '<input id="taskDailyCount" class="pa-input" style="margin:0;" type="number" min="1" max="20" value="'+dailyCount+'" placeholder="请输入每周期执行次数" oninput="taskBuildExecutionRanges()">'
     + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;color:#64748b;"><span style="width:48px;flex:0 0 48px;text-align:center;">序号</span><span class="task-execution-weekday-head" style="width:82px;flex:0 0 82px;text-align:center;display:'+(periodVal==='weekly'?'block':'none')+';">星期</span><span class="task-execution-monthday-head" style="width:82px;flex:0 0 82px;text-align:center;display:'+(periodVal==='monthly'?'block':'none')+';">执行日</span><div style="flex:1;min-width:0;display:flex;align-items:center;"><span class="task-execution-start-head" style="flex:1;min-width:0;padding:0 9px;">开始时间</span><span style="width:22px;flex:0 0 22px;"></span><span class="task-execution-end-head" style="flex:1;min-width:0;padding:0 9px;">结束时间</span></div></div>'
     + '<div id="taskExecutionRanges">'+executionRangeRowsHtml+'</div></div>'
     + '<div id="taskWeeklyDays" class="task-weekday-wrap" style="display:none;"><label class="task-form-label">选择星期</label><div class="task-weekday-picker">'
@@ -33689,7 +33689,7 @@ function taskConfirmCreate(){
     var dailyCount2 = (countMode==='limited') ? (parseInt(document.getElementById('taskDailyCount').value||'1',10)||1) : '';
     var executionRanges2 = [];
     if(countMode==='limited'){
-      if(dailyCount2<1 || dailyCount2>20){ showToast('⚠️ 次数需填写 1 至 20 的整数'); return false; }
+      if(dailyCount2<1 || dailyCount2>20){ showToast('⚠️ 每周期执行次数需填写 1 至 20 的整数'); return false; }
       var rangeRows = Array.prototype.slice.call(document.querySelectorAll('#taskExecutionRanges .task-execution-range-row'));
       if(rangeRows.length!==dailyCount2){ taskBuildExecutionRanges(); showToast('⚠️ 请选择每次执行的起止时间'); return false; }
       for(var rangeNo=0;rangeNo<rangeRows.length;rangeNo++){
