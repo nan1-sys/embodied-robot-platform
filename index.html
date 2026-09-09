@@ -2842,6 +2842,7 @@ bdeploy-model-group { margin-bottom:8px; }
 .alarm-level.urgent { color:#cf1322; background:#fff1f0; border:1px solid #ffa39e; }
 .alarm-content-main { color:#262626; line-height:1.5; }
 .alarm-content-more { color:#8c8c8c; font-size:12px; margin-top:2px; }
+.alarm-name-cell { color:#262626; font-weight:500; line-height:1.5; word-break:break-word; }
 .alarm-detail-overlay { position:fixed; inset:0; z-index:10020; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(15,23,42,.52); box-sizing:border-box; }
 .alarm-detail-modal { width:min(920px,94vw); max-height:90vh; background:#fff; border-radius:12px; box-shadow:0 24px 72px rgba(15,23,42,.28); overflow:hidden; display:flex; flex-direction:column; }
 .alarm-detail-head { display:flex; align-items:center; justify-content:space-between; padding:17px 22px; border-bottom:1px solid #e8e8e8; }
@@ -2851,6 +2852,7 @@ bdeploy-model-group { margin-bottom:8px; }
 .alarm-detail-hero { display:flex; align-items:flex-start; gap:14px; padding:16px; border:1px solid #e8e8e8; border-radius:8px; background:#fafafa; }
 .alarm-detail-hero-main { min-width:0; flex:1; }
 .alarm-detail-content { margin-top:8px; font-size:16px; font-weight:600; color:#262626; line-height:1.55; }
+.alarm-detail-description { margin-top:4px; color:#595959; font-size:13px; line-height:1.55; }
 .alarm-detail-sub { margin-top:6px; color:#8c8c8c; font-size:13px; }
 .alarm-detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; margin-top:16px; border:1px solid #e8e8e8; background:#e8e8e8; border-radius:8px; overflow:hidden; }
 .alarm-detail-field { min-height:66px; padding:12px 14px; background:#fff; box-sizing:border-box; }
@@ -32888,7 +32890,7 @@ var HISTORY_PHOTOS_KEY = 'embodied_robot_history_photos_v1';
 var HISTORY_VIDEOS_KEY = 'embodied_robot_history_videos_v1';
 var ROBOT_LOGS_KEY = 'embodied_robot_robot_logs_v1';
 var COMMAND_LOGS_KEY = 'embodied_robot_command_logs_v1';
-var ALARM_MESSAGES_KEY = 'embodied_robot_alarm_messages_v2';
+var ALARM_MESSAGES_KEY = 'embodied_robot_alarm_messages_v3';
 
 var taskArrangeState = { view:'card', page:1, pageSize:8, keyword:'' };
 var taskRecordState = { view:'list', id:null, page:1, pageSize:10, keyword:'', status:'' };
@@ -35456,7 +35458,10 @@ function renderAlarmMessage(){
   if(kw) list = list.filter(function(g){
     return String(g.robotName||'').toLowerCase().indexOf(kw)>-1
       || String(g.deviceId||'').toLowerCase().indexOf(kw)>-1
-      || g.records.some(function(r){ return String(r.content||'').toLowerCase().indexOf(kw)>-1; });
+      || g.records.some(function(r){
+        return String(r.alarmName||'').toLowerCase().indexOf(kw)>-1
+          || String(r.content||'').toLowerCase().indexOf(kw)>-1;
+      });
   });
   if(alarmMessageState.robotId) list = list.filter(function(g){ return g.deviceId===alarmMessageState.robotId; });
   if(alarmMessageState.level) list = list.filter(function(g){ return g.highestLevel===alarmMessageState.level; });
@@ -35477,7 +35482,7 @@ function renderAlarmMessage(){
     return '<option value="'+esc(r.id)+'" '+(alarmMessageState.robotId===r.id?'selected':'')+'>'+esc(r.name)+'</option>';
   }).join('');
   var filterCard = '<div class="admin-filter-card"><div class="admin-filter-row">'
-    + '<div class="admin-filter-item"><label>关键词</label><input style="width:210px" type="text" id="amFilterKeyword" placeholder="机器人、设备ID或告警内容" value="'+esc(alarmMessageState.keyword)+'"></div>'
+    + '<div class="admin-filter-item"><label>关键词</label><input style="width:210px" type="text" id="amFilterKeyword" placeholder="机器人、告警名称或内容" value="'+esc(alarmMessageState.keyword)+'"></div>'
     + '<div class="admin-filter-item"><label>机器人</label><select style="width:190px" id="amFilterRobot"><option value="">全部</option>'+robotOptions+'</select></div>'
     + '<div class="admin-filter-item"><label>级别</label><select style="width:105px" id="amFilterLevel"><option value="">全部</option><option value="info" '+(alarmMessageState.level==='info'?'selected':'')+'>信息</option><option value="alarm" '+(alarmMessageState.level==='alarm'?'selected':'')+'>告警</option><option value="urgent" '+(alarmMessageState.level==='urgent'?'selected':'')+'>紧急</option></select></div>'
     + '<div class="admin-filter-item"><label>告警时间</label><input style="width:145px" type="date" id="amFilterStartDate" value="'+esc(alarmMessageState.startDate)+'"><span style="color:#8c8c8c">至</span><input style="width:145px" type="date" id="amFilterEndDate" value="'+esc(alarmMessageState.endDate)+'"></div>'
@@ -35490,6 +35495,7 @@ function renderAlarmMessage(){
       + '<td>'+(start+idx+1)+'</td>'
       + '<td style="white-space:nowrap">'+esc(g.latestTime)+'</td>'
       + '<td>'+esc(g.robotName)+'</td>'
+      + '<td class="alarm-name-cell">'+esc(g.primary.alarmName||'—')+'</td>'
       + '<td>'+content+'</td>'
       + '<td><span class="alarm-level '+esc(g.highestLevel)+'">'+esc(alarmLevelText(g.highestLevel))+'</span></td>'
       + '<td style="white-space:nowrap">'+g.records.length+' 条</td>'
@@ -35499,8 +35505,8 @@ function renderAlarmMessage(){
   var toolbar = '<div class="admin-table-toolbar"><div class="admin-table-title">告警日志（共 '+total+' 条）</div><div style="font-size:12px;color:#8c8c8c">数据来源：AIoT</div></div>';
   var pg = renderSimplePagination('goAlarmMessagePage',total,page,totalPages);
   return filterCard+'<div class="admin-table-card">'+toolbar
-    + '<div style="overflow-x:auto"><table class="admin-data-table" style="min-width:900px"><thead><tr><th style="width:50px">序号</th><th style="width:150px">告警时间</th><th style="width:185px">机器人</th><th>告警内容</th><th style="width:90px">告警级别</th><th style="width:80px">告警数量</th><th style="width:70px">操作</th></tr></thead><tbody>'
-    + (rows||'<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:28px">暂无符合条件的告警日志</td></tr>')
+    + '<div style="overflow-x:auto"><table class="admin-data-table" style="min-width:1080px;table-layout:fixed"><thead><tr><th style="width:50px">序号</th><th style="width:150px">告警时间</th><th style="width:175px">机器人</th><th style="width:150px">告警名称</th><th style="width:300px">告警内容</th><th style="width:90px">告警级别</th><th style="width:80px">告警数量</th><th style="width:70px">操作</th></tr></thead><tbody>'
+    + (rows||'<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:28px">暂无符合条件的告警日志</td></tr>')
     + '</tbody></table></div>'+pg+'</div>';
 }
 function filterAlarmMessage(){
@@ -35536,7 +35542,7 @@ function alarmOpenDetail(groupKey){
   var sn=robot ? robot.sn : group.deviceId;
   var taskValue=group.taskName||'—';
   var rawRows=group.records.map(function(r,idx){
-    return '<tr><td>'+(idx+1)+'</td><td style="white-space:nowrap">'+esc(r.time)+'</td><td><span class="alarm-level '+esc(r.level)+'">'+esc(alarmLevelText(r.level))+'</span></td><td>'+esc(r.content)+'</td></tr>';
+    return '<tr><td>'+(idx+1)+'</td><td style="white-space:nowrap">'+esc(r.time)+'</td><td>'+esc(r.alarmName||'—')+'</td><td><span class="alarm-level '+esc(r.level)+'">'+esc(alarmLevelText(r.level))+'</span></td><td>'+esc(r.content)+'</td></tr>';
   }).join('');
   var overlay=document.createElement('div');
   overlay.id='alarmDetailOverlay';
@@ -35545,7 +35551,7 @@ function alarmOpenDetail(groupKey){
   overlay.innerHTML='<div class="alarm-detail-modal" role="dialog" aria-modal="true" aria-label="告警详情">'
     + '<div class="alarm-detail-head"><div class="alarm-detail-title">告警详情</div><button class="alarm-detail-close" onclick="closeAlarmDetail()">×</button></div>'
     + '<div class="alarm-detail-body">'
-    + '<div class="alarm-detail-hero"><span class="alarm-level '+esc(group.highestLevel)+'">'+esc(alarmLevelText(group.highestLevel))+'</span><div class="alarm-detail-hero-main"><div class="alarm-detail-content">'+esc(group.primary.content||'—')+'</div><div class="alarm-detail-sub">同一设备同一触发批次共 '+group.records.length+' 条，列表按最高级别展示</div></div></div>'
+    + '<div class="alarm-detail-hero"><span class="alarm-level '+esc(group.highestLevel)+'">'+esc(alarmLevelText(group.highestLevel))+'</span><div class="alarm-detail-hero-main"><div class="alarm-detail-content">'+esc(group.primary.alarmName||'—')+'</div><div class="alarm-detail-description">'+esc(group.primary.content||'—')+'</div><div class="alarm-detail-sub">同一设备同一触发批次共 '+group.records.length+' 条，列表按最高级别展示</div></div></div>'
     + '<div class="alarm-detail-grid">'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">机器人</div><div class="alarm-detail-value">'+esc(group.robotName)+'</div></div>'
     + '<div class="alarm-detail-field"><div class="alarm-detail-label">AIoT 设备 ID</div><div class="alarm-detail-value">'+esc(group.deviceId)+'</div></div>'
@@ -35556,7 +35562,7 @@ function alarmOpenDetail(groupKey){
     + '<div class="alarm-detail-field wide"><div class="alarm-detail-label">关联任务</div><div class="alarm-detail-value">'+esc(taskValue)+'</div></div>'
     + '</div>'
     + '<div class="alarm-detail-section-title">AIoT 原始告警记录（'+group.records.length+' 条）</div>'
-    + '<div class="alarm-detail-records"><table class="admin-data-table"><thead><tr><th style="width:64px">序号</th><th>告警时间</th><th>级别</th><th>告警内容</th></tr></thead><tbody>'+rawRows+'</tbody></table></div>'
+    + '<div class="alarm-detail-records"><table class="admin-data-table"><thead><tr><th style="width:64px">序号</th><th>告警时间</th><th>告警名称</th><th>级别</th><th>告警内容</th></tr></thead><tbody>'+rawRows+'</tbody></table></div>'
     + '</div><div class="alarm-detail-foot"><button class="default" onclick="closeAlarmDetail()">关闭</button>'
     + (group.taskId?'<button class="default" onclick="alarmOpenTask(\''+esc(group.taskId)+'\')">查看关联任务</button>':'')
     + '<button class="primary" onclick="alarmOpenRobot(\''+esc(group.deviceId)+'\')">查看机器人</button></div></div>';
