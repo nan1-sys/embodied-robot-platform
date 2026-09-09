@@ -2768,9 +2768,6 @@ bdeploy-model-group { margin-bottom:8px; }
 .task-weekday-option:hover { background:#f1f5f9; }
 .task-weekday-option.selected { background:#eff6ff; color:#1677ff; font-weight:600; }
 .task-weekday-option input { display:none; }
-.task-monthly-mode-row { display:flex; align-items:center; gap:28px; margin:0 0 8px; }
-.task-monthly-mode { display:inline-flex; align-items:center; gap:7px; color:#475569; font-size:13px; cursor:pointer; }
-.task-monthly-mode input { width:16px; height:16px; margin:0; accent-color:#1677ff; }
 .task-month-day-grid { grid-template-columns:repeat(6,1fr); max-height:190px; overflow-y:auto; padding-right:3px; }
 .task-month-day-grid .task-weekday-option { min-height:30px; }
 .proc-device-tag { display:inline-flex; align-items:center; gap:4px; padding:4px 8px 4px 10px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; color:#1d4ed8; font-size:13px; margin:3px 6px 3px 0; }
@@ -33004,18 +33001,9 @@ function taskPlanSummary(p){
     var dn=['一','二','三','四','五','六','日']; s += '('+p.weekDays.map(function(d){return '周'+dn[d];}).join(',')+')';
   }
   if(p.period==='monthly'){
-    if(p.monthlyMode==='week'){
-      var mdn=['一','二','三','四','五','六','日'];
-      var monthlyOrdinals=(p.monthlyWeeks||[1,2,3,4,5]);
-      var monthlyWeekdays=(p.monthlyWeekDays||[0,1,2,3,4,5,6]);
-      var ordinalText=monthlyOrdinals.length===5?'每周':monthlyOrdinals.map(function(w){return '第'+w+'周';}).join(',');
-      var weekdayText=monthlyWeekdays.length===7?'每天':monthlyWeekdays.map(function(d){return '周'+mdn[d];}).join(',');
-      s += '('+ordinalText+' · '+weekdayText+')';
-    } else {
-      var monthlyDates=(p.monthDays||[]);
-      var dateText=monthlyDates.length===31?'每天':monthlyDates.slice().sort(function(a,b){return a-b}).map(function(v){return v+'日';}).join(',');
-      if(dateText!=='每天') s += '('+(dateText||'未选择日期')+')';
-    }
+    var monthlyDates=(p.monthDays||[]);
+    var dateText=monthlyDates.length===31?'每天':monthlyDates.slice().sort(function(a,b){return a-b}).map(function(v){return v+'日';}).join(',');
+    if(dateText!=='每天') s += '('+(dateText||'未选择日期')+')';
   }
   if(!(p.countMode==='limited' && Array.isArray(p.executionRanges) && p.executionRanges.length)){
     s += ' '+(p.startTime||'')+'-'+(p.endTime||'');
@@ -33220,22 +33208,10 @@ function taskOpenCreateModal(planId, copyMode){
     return '<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+value+'" '+(checked?'checked':'')+' onchange="taskUpdateWeekdayUI()"><span>'+weekDayLabels[value]+'</span></label>';
   }).join('');
   var weekDayText = weekDaysVal.slice().sort(function(a,b){ return a-b; }).map(function(value){ return weekDayLabels[value]; }).join('、') || '请选择星期';
-  var monthlyMode = editPlan && editPlan.monthlyMode ? editPlan.monthlyMode : 'date';
-  var monthlyWeeks = (editPlan && Array.isArray(editPlan.monthlyWeeks) && editPlan.monthlyWeeks.length)
-    ? editPlan.monthlyWeeks.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=1 && v<=5; })
-    : [1,2,3,4,5];
-  var monthlyWeekDays = (editPlan && Array.isArray(editPlan.monthlyWeekDays) && editPlan.monthlyWeekDays.length)
-    ? editPlan.monthlyWeekDays.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=0 && v<=6; })
-    : [0,1,2,3,4,5,6];
   var monthDaysVal = (editPlan && Array.isArray(editPlan.monthDays) && editPlan.monthDays.length)
     ? editPlan.monthDays.map(function(v){ return parseInt(v,10); }).filter(function(v){ return v>=1 && v<=31; })
     : [parseInt((editPlan && editPlan.startDate ? editPlan.startDate : taskTodayStr()).slice(8,10),10)||1];
-  var monthlyOrdinalLabels = ['第一周','第二周','第三周','第四周','第五周'];
-  var monthlyOrdinalWeekOptionsHtml = monthlyOrdinalLabels.map(function(label,index){ var value=index+1, checked=monthlyWeeks.indexOf(value)>-1; return '<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+value+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+label+'</span></label>'; }).join('');
-  var monthlyWeekOptionsHtml = weekDayOrder.map(function(value){ var checked=monthlyWeekDays.indexOf(value)>-1; return '<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+value+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+weekDayLabels[value]+'</span></label>'; }).join('');
   var monthDayOptionsHtml = (function(){ var html=''; for(var day=1;day<=31;day++){ var checked=monthDaysVal.indexOf(day)>-1; html+='<label class="task-weekday-option'+(checked?' selected':'')+'"><input type="checkbox" value="'+day+'" '+(checked?'checked':'')+' onchange="taskUpdateMonthlyUI()"><span>'+day+'号</span></label>'; } return html; })();
-  var monthlyOrdinalWeekText = monthlyWeeks.length===5 ? '每周' : monthlyWeeks.slice().sort(function(a,b){ return a-b; }).map(function(v){ return monthlyOrdinalLabels[v-1]; }).join('、');
-  var monthlyWeekText = monthlyWeekDays.length===7 ? '每天' : monthlyWeekDays.slice().sort(function(a,b){ return a-b; }).map(function(v){ return weekDayLabels[v]; }).join('、');
   var monthDayText = monthDaysVal.length===31 ? '每天' : monthDaysVal.slice().sort(function(a,b){ return a-b; }).map(function(v){ return v+'号'; }).join('、');
   var tdStr = taskTodayStr();
   if(!startDateVal) startDateVal = tdStr;
@@ -33286,10 +33262,7 @@ function taskOpenCreateModal(planId, copyMode){
     + '<div id="taskWeekdayPanel" class="task-weekday-panel">'
     + '<div class="task-weekday-presets"><button type="button" class="task-weekday-preset" data-mode="daily" onclick="taskSetWeekdayPreset(\'daily\')">每天</button><button type="button" class="task-weekday-preset" data-mode="workday" onclick="taskSetWeekdayPreset(\'workday\')">工作日</button><button type="button" class="task-weekday-preset" data-mode="weekend" onclick="taskSetWeekdayPreset(\'weekend\')">周末</button></div>'
     + '<div class="task-weekday-grid">'+weekDayOptionsHtml+'</div></div></div></div>'
-    + '<div id="taskMonthlyDays" class="task-weekday-wrap" style="display:none;">'
-    + '<label class="task-form-label">执行日期规则</label><div class="task-monthly-mode-row"><label class="task-monthly-mode"><input type="radio" name="taskMonthlyMode" value="week" '+(monthlyMode==='week'?'checked':'')+' onchange="taskMonthlyModeChange()">按周几执行</label><label class="task-monthly-mode"><input type="radio" name="taskMonthlyMode" value="date" '+(monthlyMode==='date'?'checked':'')+' onchange="taskMonthlyModeChange()">按日期执行</label></div>'
-    + '<div id="taskMonthlyWeekWrap"><label class="task-form-label">执行周次</label><div class="task-weekday-picker task-schedule-picker"><div id="taskMonthlyOrdinalWeekTrigger" class="task-weekday-trigger" onclick="taskToggleSchedulePanel(\'taskMonthlyOrdinalWeekPanel\',\'taskMonthlyOrdinalWeekTrigger\',event)"><span id="taskMonthlyOrdinalWeekText">'+monthlyOrdinalWeekText+'</span><span class="arrow">⌄</span></div><div id="taskMonthlyOrdinalWeekPanel" class="task-weekday-panel"><div class="task-weekday-presets"><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'weeks\',true)">全选</button><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'weeks\',false)">取消全选</button></div><div id="taskMonthlyOrdinalWeekOptions" class="task-weekday-grid">'+monthlyOrdinalWeekOptionsHtml+'</div></div></div><label class="task-form-label">执行星期</label><div class="task-weekday-picker task-schedule-picker"><div id="taskMonthlyWeekTrigger" class="task-weekday-trigger" onclick="taskToggleSchedulePanel(\'taskMonthlyWeekPanel\',\'taskMonthlyWeekTrigger\',event)"><span id="taskMonthlyWeekText">'+monthlyWeekText+'</span><span class="arrow">⌄</span></div><div id="taskMonthlyWeekPanel" class="task-weekday-panel"><div class="task-weekday-presets"><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'weekdays\',true)">全选</button><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'weekdays\',false)">取消全选</button></div><div id="taskMonthlyWeekOptions" class="task-weekday-grid">'+monthlyWeekOptionsHtml+'</div></div></div></div>'
-    + '<div id="taskMonthlyDateWrap"><label class="task-form-label">执行日期</label><div class="task-weekday-picker task-schedule-picker"><div id="taskMonthDayTrigger" class="task-weekday-trigger" onclick="taskToggleSchedulePanel(\'taskMonthDayPanel\',\'taskMonthDayTrigger\',event)"><span id="taskMonthDayText">'+monthDayText+'</span><span class="arrow">⌄</span></div><div id="taskMonthDayPanel" class="task-weekday-panel"><div class="task-weekday-presets"><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'days\',true)">全选</button><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'days\',false)">取消全选</button></div><div id="taskMonthDayOptions" class="task-weekday-grid task-month-day-grid">'+monthDayOptionsHtml+'</div></div></div><div style="font-size:12px;color:#94a3b8;margin-top:5px;">选择 29、30 或 31 日时，当月不存在该日期则跳过执行</div></div>'
+    + '<div id="taskMonthlyDays" class="task-weekday-wrap" style="display:none;"><label class="task-form-label">执行日期</label><div class="task-weekday-picker task-schedule-picker"><div id="taskMonthDayTrigger" class="task-weekday-trigger" onclick="taskToggleSchedulePanel(\'taskMonthDayPanel\',\'taskMonthDayTrigger\',event)"><span id="taskMonthDayText">'+monthDayText+'</span><span class="arrow">⌄</span></div><div id="taskMonthDayPanel" class="task-weekday-panel"><div class="task-weekday-presets"><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'days\',true)">全选</button><button type="button" class="task-weekday-preset" onclick="taskSetMonthlyGroup(\'days\',false)">取消全选</button></div><div id="taskMonthDayOptions" class="task-weekday-grid task-month-day-grid">'+monthDayOptionsHtml+'</div></div></div><div style="font-size:12px;color:#94a3b8;margin-top:5px;">选择 29、30 或 31 日时，当月不存在该日期则跳过执行</div></div>'
     + '</div>'
     + '<div id="taskDefaultWindowWrap" style="display:'+(countModeVal==='limited'?'none':'block')+';"><div style="display:flex;gap:12px;"><div style="flex:1"><label class="task-form-label">开始时间</label><input id="taskStart" class="pa-input" type="time" value="'+startVal+'"></div><div style="flex:1"><label class="task-form-label">结束时间</label><input id="taskEnd" class="pa-input" type="time" value="'+endVal+'"></div></div>'
     + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">提示：以上为机器人执行任务的工作时间窗口，任务将在该时间段内执行</div></div>'
@@ -33304,7 +33277,6 @@ function taskOpenCreateModal(planId, copyMode){
   taskPathChange();
   taskPeriodChange();
   taskUpdateWeekdayUI();
-  taskMonthlyModeChange();
   taskUpdateMonthlyUI();
   taskCountModeChange();
   if(!window._taskWeekdayOutsideBound){
