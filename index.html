@@ -33684,7 +33684,7 @@ function taskConfirmCreate(){
     var endDate2 = endMode2==='date' ? (document.getElementById('taskEndDate').value||'') : '';
     if(!startDate2){ showToast('⚠️ 请选择任务生效日期'); return false; }
     if(period==='weekly' && !weekDays.length){ showToast('⚠️ 请至少选择一个星期'); return false; }
-    if(period==='monthly' && !monthDays.length){ showToast('⚠️ 请至少选择一个finder日期'); return false; }
+    if(period==='monthly' && !monthDays.length){ showToast('⚠️ 请至少选择一个执行日期'); return false; }
     if(endMode2==='date' && !endDate2){ showToast('⚠️ 请选择任务失效日期'); return false; }
     extra = { taskType:'recurring', period:period, periods:['am','pm'],
       startTime:startTime2, endTime:endTime2, dailyCount:dailyCount2, countMode:countMode,
