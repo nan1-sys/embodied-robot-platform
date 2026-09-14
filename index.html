@@ -25921,6 +25921,20 @@ function rcBuildCapabilityPanel(d){
   return html;
 }
 
+function cockpitCurrentTaskName(robot){
+  try {
+    if(typeof taskLoadAll === 'function') taskLoadAll();
+  } catch(e){}
+  var plans = Array.isArray(taskPlans) ? taskPlans : [];
+  var robotId = robot && robot.id ? robot.id : '';
+  var robotName = robot && robot.name ? robot.name : '';
+  var current = plans.filter(function(plan){
+    if(!plan || (plan.status !== 'running' && plan.status !== 'executing')) return false;
+    return (robotId && plan.robotId === robotId) || (robotName && plan.robotName === robotName);
+  })[0];
+  return current && current.name ? current.name : '暂无执行中任务';
+}
+
 function renderCockpitDeviceInfo(robot){
   var battery = robot.battery != null ? robot.battery : 87;
   var statusOk = (robot.status==='enabled' || robot.status==='online' || robot.status==='running');
@@ -25949,6 +25963,13 @@ function renderCockpitDeviceInfo(robot){
   html += '<span class="ck-info-icon">📡</span>';
   html += '<span class="ck-info-label">状态</span>';
   html += '<span class="ck-info-value"><span class="ck-info-badge '+statusClass+'"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;"></span>'+statusText+'</span></span>';
+  html += '</div>';
+
+  var currentTaskName = cockpitCurrentTaskName(robot);
+  html += '<div class="ck-info-item">';
+  html += '<span class="ck-info-icon">📋</span>';
+  html += '<span class="ck-info-label">当前任务</span>';
+  html += '<span class="ck-info-value" title="'+esc(currentTaskName)+'">'+esc(currentTaskName)+'</span>';
   html += '</div>';
 
   html += '<div class="ck-info-item">';
