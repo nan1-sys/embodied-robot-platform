@@ -1597,12 +1597,14 @@ bdeploy-model-group { margin-bottom:8px; }
 .calib-searchbar .calib-search-box button { position:absolute; right:2px; top:50%; transform:translateY(-50%); border:none; background:transparent; color:#8c8c8c; cursor:pointer; padding:4px 7px; font-size:13px; }
 .calib-searchbar .calib-search-box button:hover { color:#1890ff; }
 /* 右上角工具栏 */
-.calib-toolbar { position:absolute; top:12px; right:12px; z-index:10001; display:flex; align-items:center; gap:8px; width:330px; background:rgba(255,255,255,.96); padding:8px 10px; border:1px solid #e8e8e8; border-radius:6px; box-shadow:0 2px 12px rgba(0,0,0,.1); }
+.calib-toolbar { position:absolute; top:12px; right:12px; z-index:10001; display:flex; align-items:center; flex-wrap:wrap; gap:8px; width:330px; background:rgba(255,255,255,.96); padding:8px 10px; border:1px solid #e8e8e8; border-radius:6px; box-shadow:0 2px 12px rgba(0,0,0,.1); }
 .calib-tb-btn { flex:1; display:inline-flex; align-items:center; justify-content:center; gap:4px; padding:6px 12px; background:#fff; border:1px solid #d9d9d9; border-radius:4px; font-size:13px; line-height:1.4; color:#262626; cursor:pointer; transition:all .15s; }
 .calib-tb-btn:hover { border-color:#1890ff; color:#1890ff; }
 .calib-tb-btn.primary { background:#1890ff; border-color:#1890ff; color:#fff; }
 .calib-tb-btn.primary:hover { background:#40a9ff; }
 .calib-tb-btn.active { background:#e6f7ff; border-color:#1890ff; color:#1890ff; }
+.calib-current-map { flex:0 0 100%; min-width:0; display:flex; align-items:center; gap:6px; padding:2px 4px 0; font-size:12px; line-height:20px; color:#8c8c8c; }
+.calib-current-map b { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#262626; font-weight:600; }
 .calib-current-tag { padding:6px 10px; background:#f6ffed; border:1px solid #b7eb8f; border-radius:4px; font-size:12px; color:#389e0d; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 /* 隐藏地图左下角高德 logo / 版权 / 比例尺 / 地图类型切换卡片 */
 .amap-logo, .amap-copyright, .amap-scale, .amap-maptype, .amap-maptype-card, .amap-maptype-list { display:none !important; opacity:0 !important; visibility:hidden !important; }
@@ -32483,6 +32485,7 @@ function renderCalibrate(){
     +   '<div class="calib-toolbar" id="calibToolbar">'
     +     '<button class="calib-tb-btn" onclick="openCalibMapModal()">🗺 选择slam图</button>'
     +     '<button class="calib-tb-btn primary" onclick="saveCalibrate()">💾 保存</button>'
+    +     '<div class="calib-current-map" id="calibCurrentTag" title="当前SLAM地图：未选择"><span>当前SLAM地图：</span><b>未选择</b></div>'
     +   '</div>'
     +   '<div class="calib-layer-legend normal" id="calibLayerLegend" onclick="toggleCalibMapLayer()" title="当前：二维地图，点击切换卫星"></div>'
     +   '<div id="calibCtrlPanel" class="hidden">'
@@ -32658,7 +32661,12 @@ function selectCalibMap(id){
   var toolbar=document.getElementById('calibToolbar'); if(toolbar) toolbar.style.display='flex';
   var coord=document.getElementById('calibCoordDisplay'); if(coord) coord.classList.remove('hidden');
   var panel=document.getElementById('calibCtrlPanel'); if(panel) panel.classList.remove('hidden');
-  var tag=document.getElementById('calibCurrentTag'); if(tag && m) tag.innerHTML='当前校准：<b>'+(m.name||'')+'</b>'+(saved?'（已沿用上次校准）':'');
+  var tag=document.getElementById('calibCurrentTag');
+  if(tag && m){
+    var tagName=tag.querySelector('b');
+    if(tagName) tagName.textContent=m.name||'—';
+    tag.title='当前SLAM地图：'+(m.name||'—');
+  }
   if(saved) showToast('已加载 '+m.name+' 的上次校准参数，可继续调整');
 }
 
