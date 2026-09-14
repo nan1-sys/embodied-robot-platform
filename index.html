@@ -5989,6 +5989,7 @@ var rcActivePosture = ''; // lower | stand | climb，姿态动作单选状态
 var rcTaskMode = ''; // auto_patrol | manual，巡检模式互斥
 var rcTaskState = 'idle'; // idle | running | paused | returning
 var rcTaskPausedFrom = '';
+var rcTaskInitialName = '暂无执行中任务';
 var rcTaskPulseTimer = null;
 var rcUpperSelected = 'ptz'; // ptz | strobe | horn  上装设备子卡片选中状态
 var rcStrobeOn = false;       // 爆闪灯开关状态
@@ -6020,7 +6021,8 @@ function showRobotFloatPanel(robotId) {
   var robot = robotsData.find(function(x){ return x.id===robotId; });
   if(!robot) return;
 
-  var hasRunningTask = cockpitCurrentTaskName(robot) !== '暂无执行中任务';
+  rcTaskInitialName = cockpitCurrentTaskName(robot);
+  var hasRunningTask = rcTaskInitialName !== '暂无执行中任务';
   rcTaskMode = hasRunningTask ? 'auto_patrol' : '';
   rcTaskState = hasRunningTask ? 'running' : 'idle';
   rcTaskPausedFrom = '';
@@ -25729,7 +25731,7 @@ function renderCockpitHTML(robot) {
   var badgeClass = (robot.status==='enabled' || robot.status==='running' || robot.status==='online') ? '' : 'offline';
   var badgeText = ckStatusBadgeMap[robot.status] || statusText;
   var battery = robot.battery != null ? robot.battery : 87;
-  var currentTaskName = cockpitCurrentTaskName(robot);
+  var currentTaskName = rcTaskCurrentLabel();
   var currentTaskEmpty = currentTaskName === '暂无执行中任务';
   return '<div class="ck-topbar">'
     + '<div class="ck-title">'
@@ -25739,10 +25741,10 @@ function renderCockpitHTML(robot) {
     + '</div>'
     + '<div class="ck-center-title">控制驾驶舱</div>'
     + '<div class="ck-metrics-wrap">'
-      + '<div class="ck-current-task'+(currentTaskEmpty?' empty':'')+'" title="当前任务：'+esc(currentTaskName)+'">'
+      + '<div class="ck-current-task'+(currentTaskEmpty?' empty':'')+'" id="ckCurrentTaskBadge" title="当前任务：'+esc(currentTaskName)+'">'
         + '<span class="ck-current-task-dot"></span>'
         + '<span class="ck-current-task-label">当前任务</span>'
-        + '<b>'+esc(currentTaskName)+'</b>'
+        + '<b id="ckCurrentTaskTop">'+esc(currentTaskName)+'</b>'
       + '</div>'
       + '<div class="ck-metrics">'
         + '<span class="ck-metric">延迟 <b id="ckLatency">28</b> ms</span>'
@@ -25984,6 +25986,15 @@ function cockpitCurrentTaskName(robot){
   return current && current.name ? current.name : '暂无执行中任务';
 }
 
+function rcTaskCurrentLabel(){
+  if(rcTaskState === 'idle') return '暂无执行中任务';
+  var label = rcTaskState === 'returning'
+    ? '返航中'
+    : (rcTaskMode === 'manual' ? '手动巡检' : rcTaskInitialName);
+  if(!label || label === '暂无执行中任务') label = rcTaskMode === 'manual' ? '手动巡检' : '自动巡检';
+  return rcTaskState === 'paused' ? label+'（已暂停）' : label;
+}
+
 function renderCockpitDeviceInfo(robot){
   var battery = robot.battery != null ? robot.battery : 87;
   var statusOk = (robot.status==='enabled' || robot.status==='online' || robot.status==='running');
@@ -26014,11 +26025,11 @@ function renderCockpitDeviceInfo(robot){
   html += '<span class="ck-info-value"><span class="ck-info-badge '+statusClass+'"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;"></span>'+statusText+'</span></span>';
   html += '</div>';
 
-  var currentTaskName = cockpitCurrentTaskName(robot);
+  var currentTaskName = rcTaskCurrentLabel();
   html += '<div class="ck-info-item">';
   html += '<span class="ck-info-icon">📋</span>';
   html += '<span class="ck-info-label">当前任务</span>';
-  html += '<span class="ck-info-value" title="'+esc(currentTaskName)+'">'+esc(currentTaskName)+'</span>';
+  html += '<span class="ck-info-value" id="ckCurrentTaskInfo" title="'+esc(currentTaskName)+'">'+esc(currentTaskName)+'</span>';
   html += '</div>';
 
   html += '<div class="ck-info-item">';
@@ -26229,6 +26240,7 @@ function rcSendTask(task) {
     rcTaskMode = task;
     rcTaskState = 'running';
     rcTaskPausedFrom = '';
+    rcTaskInitialName = map[task];
     rcSyncTaskButtons();
     showToast('📋 已切换为'+map[task]+'模式', 'success');
     console.log('[RC] 巡检模式:', task);
@@ -26271,6 +26283,7 @@ function rcSendTask(task) {
     rcTaskMode = '';
     rcTaskState = 'idle';
     rcTaskPausedFrom = '';
+    rcTaskInitialName = '暂无执行中任务';
     rcSyncTaskButtons();
     showToast('⛔ 当前任务已终止', 'error');
     console.log('[RC] 任务已终止');
@@ -26281,6 +26294,7 @@ function rcSendTask(task) {
     rcTaskMode = '';
     rcTaskState = 'returning';
     rcTaskPausedFrom = '';
+    rcTaskInitialName = '返航中';
     rcSyncTaskButtons();
     var homeButton = document.querySelector('[data-task-action="home"]');
     if(homeButton){
@@ -26315,6 +26329,17 @@ function rcSyncTaskButtons(){
     button.disabled = !manualEnabled;
     button.title = manualEnabled ? '' : '请先切换至手动巡检模式';
   });
+
+  var currentTaskLabel = rcTaskCurrentLabel();
+  var topTask = document.getElementById('ckCurrentTaskTop');
+  if(topTask) topTask.textContent = currentTaskLabel;
+  var infoTask = document.getElementById('ckCurrentTaskInfo');
+  if(infoTask){ infoTask.textContent = currentTaskLabel; infoTask.title = currentTaskLabel; }
+  var badge = document.getElementById('ckCurrentTaskBadge');
+  if(badge){
+    badge.classList.toggle('empty', currentTaskLabel === '暂无执行中任务');
+    badge.title = '当前任务：'+currentTaskLabel;
+  }
 }
 function rcSendMedia(type) {
   var map = { photo:'拍照', call:'远程通话', audio:'播放音频' };
