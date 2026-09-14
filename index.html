@@ -26034,7 +26034,7 @@ function rcTaskCurrentLabel(){
   if(rcTaskState === 'returning') label = '返航中';
   else if(rcTaskMode === 'manual') label = '手动巡检';
   else if(rcTaskInitialName && rcTaskInitialName !== '暂无执行中任务' && rcTaskInitialName !== '自动巡检'){
-    label = '自动巡检 · '+rcTaskInitialName;
+    label = rcTaskInitialName;
   }
   return rcTaskState === 'paused' ? label+'（已暂停）' : label;
 }
