@@ -26097,6 +26097,10 @@ function rcSpeedChange(val) {
 
 function rcSendCmd(cmd) {
   if(!rcActiveRobotId) return;
+  if(rcTaskMode !== 'manual' || rcTaskState !== 'running'){
+    showToast('请先切换至手动巡检模式', 'warning');
+    return;
+  }
   var r = robotsData.find(function(x){ return x.id===rcActiveRobotId; });
   var cmdMap = { forward:'前进', backward:'后退', left:'左移', right:'右移', rotate_left:'左旋', rotate_right:'右旋' };
   console.log('[RC] 发送指令:', cmd, '设备:', r?r.name:rcActiveRobotId, '速度:', rcSpeed);
@@ -26143,7 +26147,9 @@ function rcSendAction(action) {
 
   var robot = robotsData.find(function(item){ return item.id === rcActiveRobotId; });
   var currentTaskName = robot ? cockpitCurrentTaskName(robot) : '暂无执行中任务';
-  var hasRunningTask = currentTaskName !== '暂无执行中任务';
+  var hasRunningTask = currentTaskName !== '暂无执行中任务'
+    || (rcTaskMode === 'auto_patrol' && rcTaskState === 'running');
+  if(currentTaskName === '暂无执行中任务' && hasRunningTask) currentTaskName = '自动巡检';
   var isHighSpeed = rcSpeed >= 0.6;
   if(hasRunningTask || isHighSpeed){
     var warning = hasRunningTask
@@ -26180,6 +26186,7 @@ function rcSwitchControlTab(tab){
   if(rightActions){
     rightActions.innerHTML = renderCockpitRightActions(robot);
     initCockpitPtzEvents();
+    rcSyncTaskButtons();
     document.querySelectorAll('.ck-console-tabs .rfp-ctrl-tab, .ck-console-tabs .ck-console-tab').forEach(function(t){
       t.classList.toggle('active', t.getAttribute('onclick') && t.getAttribute('onclick').indexOf("'"+rcControlTab+"'") >= 0);
     });
