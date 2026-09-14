@@ -3385,12 +3385,14 @@ bdeploy-model-group { margin-bottom:8px; }
   border-color:#38bdf8; color:#fff;
   box-shadow:0 0 14px rgba(56,189,248,.32), inset 0 0 10px rgba(56,189,248,.12);
 }
-.ck-ctrl-btn.ck-task-active {
+.ck-ctrl-btn.ck-task-active,
+.ck-ctrl-btn.ck-media-active {
   background:linear-gradient(135deg, rgba(14,165,233,.34), rgba(37,99,235,.24));
   border-color:#38bdf8; color:#fff;
   box-shadow:0 0 14px rgba(56,189,248,.32), inset 0 0 10px rgba(56,189,248,.12);
 }
 .ck-ctrl-btn.ck-task-pulse { animation:ckTaskPulse .75s ease; }
+.ck-ctrl-btn.ck-media-pulse { animation:ckTaskPulse .55s ease; }
 .ck-ctrl-btn:disabled { opacity:.38; cursor:not-allowed; transform:none; box-shadow:none; }
 @keyframes ckTaskPulse {
   0%,100% { background:rgba(15,23,42,.75); box-shadow:0 0 8px rgba(56,189,248,.08); }
@@ -5999,6 +6001,9 @@ var rcTaskState = 'idle'; // idle | running | paused | returning
 var rcTaskPausedFrom = '';
 var rcTaskInitialName = '暂无执行中任务';
 var rcTaskPulseTimer = null;
+var rcMediaCallOn = false;
+var rcMediaAudioOn = false;
+var rcMediaPulseTimer = null;
 var rcUpperSelected = 'ptz'; // ptz | strobe | horn  上装设备子卡片选中状态
 var rcStrobeOn = false;       // 爆闪灯开关状态
 var rcHornOn = false;         // 喇叭开关状态
@@ -6024,6 +6029,8 @@ function showRobotFloatPanel(robotId) {
   hideRobotFloatPanel();
   rcActiveRobotId = robotId;
   rcActivePosture = '';
+  rcMediaCallOn = false;
+  rcMediaAudioOn = false;
   rcUpperSelected = ''; // v20.9.15：切换机器人时清空上装设备选中态
 
   var robot = robotsData.find(function(x){ return x.id===robotId; });
@@ -6048,6 +6055,7 @@ function showRobotFloatPanel(robotId) {
   // 绑定驾驶舱事件（摇杆停手、速度显示等）
   initCockpitEvents();
   rcSyncTaskButtons();
+  rcSyncMediaButtons();
 
   // 初始化小地图与视频
   bootCockpitMiniMap(robot);
@@ -6067,6 +6075,7 @@ function showRobotFloatPanel(robotId) {
 
 function hideRobotFloatPanel() {
   if(rcTaskPulseTimer){ clearTimeout(rcTaskPulseTimer); rcTaskPulseTimer = null; }
+  if(rcMediaPulseTimer){ clearTimeout(rcMediaPulseTimer); rcMediaPulseTimer = null; }
   // 暂停并释放视频
   var videos = document.querySelectorAll('.ck-video');
   videos.forEach(function(v){
@@ -25881,9 +25890,9 @@ function renderCockpitRightActions(robot){
   // 4. 媒体交互
   html += '<div><div class="ck-section-title">媒体交互</div>';
   html += '<div class="ck-btn-grid ck-grid-3">';
-  html += '<button class="ck-ctrl-btn" onclick="rcSendMedia(\'photo\')">📷 拍照</button>';
-  html += '<button class="ck-ctrl-btn" onclick="rcSendMedia(\'call\')">📞 通话</button>';
-  html += '<button class="ck-ctrl-btn" onclick="rcSendMedia(\'audio\')">🔊 音频</button>';
+  html += '<button class="ck-ctrl-btn" data-media-action="photo" onclick="rcSendMedia(\'photo\')">📷 拍照</button>';
+  html += '<button class="ck-ctrl-btn'+(rcMediaCallOn?' ck-media-active':'')+'" data-media-action="call" aria-pressed="'+rcMediaCallOn+'" onclick="rcSendMedia(\'call\')">📞 通话</button>';
+  html += '<button class="ck-ctrl-btn'+(rcMediaAudioOn?' ck-media-active':'')+'" data-media-action="audio" aria-pressed="'+rcMediaAudioOn+'" onclick="rcSendMedia(\'audio\')">🔊 音频</button>';
   html += '</div></div>';
 
   html += '</div>';
@@ -26208,6 +26217,7 @@ function rcSwitchControlTab(tab){
     rightActions.innerHTML = renderCockpitRightActions(robot);
     initCockpitPtzEvents();
     rcSyncTaskButtons();
+    rcSyncMediaButtons();
     document.querySelectorAll('.ck-console-tabs .rfp-ctrl-tab, .ck-console-tabs .ck-console-tab').forEach(function(t){
       t.classList.toggle('active', t.getAttribute('onclick') && t.getAttribute('onclick').indexOf("'"+rcControlTab+"'") >= 0);
     });
@@ -26356,9 +26366,40 @@ function rcSyncTaskButtons(){
   }
 }
 function rcSendMedia(type) {
-  var map = { photo:'拍照', call:'远程通话', audio:'播放音频' };
-  showToast('📡 '+(map[type]||type)+' 指令已下发');
-  console.log('[RC] 媒体交互:', type);
+  if(type === 'photo'){
+    var photoButton = document.querySelector('[data-media-action="photo"]');
+    if(photoButton){
+      photoButton.classList.remove('ck-media-pulse');
+      void photoButton.offsetWidth;
+      photoButton.classList.add('ck-media-pulse');
+      if(rcMediaPulseTimer) clearTimeout(rcMediaPulseTimer);
+      rcMediaPulseTimer = setTimeout(function(){
+        photoButton.classList.remove('ck-media-pulse');
+        rcMediaPulseTimer = null;
+      }, 600);
+    }
+    showToast('📷 拍照指令已发送');
+    console.log('[RC] 拍照');
+    return;
+  }
+
+  if(type === 'call') rcMediaCallOn = !rcMediaCallOn;
+  if(type === 'audio') rcMediaAudioOn = !rcMediaAudioOn;
+  rcSyncMediaButtons();
+
+  var enabled = type === 'call' ? rcMediaCallOn : rcMediaAudioOn;
+  var name = type === 'call' ? '通话' : '音频';
+  showToast((type === 'call' ? '📞 ' : '🔊 ')+name+(enabled?'已开启':'已关闭'), enabled?'success':'warning');
+  console.log('[RC] 媒体交互:', type, enabled);
+}
+
+function rcSyncMediaButtons(){
+  document.querySelectorAll('[data-media-action="call"], [data-media-action="audio"]').forEach(function(button){
+    var type = button.getAttribute('data-media-action');
+    var active = type === 'call' ? rcMediaCallOn : rcMediaAudioOn;
+    button.classList.toggle('ck-media-active', active);
+    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
 }
 
 // ================================================================
