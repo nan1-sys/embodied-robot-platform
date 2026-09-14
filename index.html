@@ -6043,7 +6043,7 @@ function showRobotFloatPanel(robotId) {
 
   rcTaskInitialName = cockpitCurrentTaskName(robot);
   var hasRunningTask = rcTaskInitialName !== '暂无执行中任务';
-  rcTaskMode = hasRunningTask ? 'auto_patrol' : '';
+  rcTaskMode = hasRunningTask ? 'auto_patrol' : 'manual';
   rcTaskState = hasRunningTask ? 'running' : 'idle';
   rcTaskPausedFrom = '';
 
@@ -25831,7 +25831,7 @@ function renderCockpitHTML(robot) {
 
 function renderCockpitCenterConsole(robot){
   var battery = robot.battery != null ? robot.battery : 87;
-  var manualControlEnabled = rcTaskMode === 'manual' && rcTaskState === 'running';
+  var manualControlEnabled = rcTaskMode === 'manual' && rcTaskState !== 'paused';
   var manualControlAttrs = manualControlEnabled ? '' : ' disabled aria-disabled="true" title="请先切换至手动巡检模式"';
   var robotSvg = '<svg viewBox="0 0 64 64" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="18" r="10" fill="rgba(56,189,248,.12)"/><path d="M22 34h20M28 34l-6 14M36 34l6 14"/><circle cx="26" cy="50" r="4" fill="rgba(56,189,248,.1)"/><circle cx="38" cy="50" r="4" fill="rgba(56,189,248,.1)"/></svg>';
   return '<div class="ck-dial'+(manualControlEnabled?'':' ck-direction-locked')+'" id="ckDial">'
@@ -26158,7 +26158,7 @@ function rcSpeedChange(val) {
 
 function rcSendCmd(cmd) {
   if(!rcActiveRobotId) return;
-  if(rcTaskMode !== 'manual' || rcTaskState !== 'running'){
+  if(rcTaskMode !== 'manual' || rcTaskState === 'paused'){
     showToast('请先切换至手动巡检模式', 'warning');
     return;
   }
@@ -26287,27 +26287,33 @@ function rcSendUpperCmd(deviceId, capName, value){
 function rcSendTask(task) {
   var map = { auto_patrol:'自动巡检', manual:'手动巡检', pause:'暂停任务', resume:'恢复任务', stop:'终止任务', home:'返航' };
 
-  if(task === 'auto_patrol' || task === 'manual'){
-    var switchingFromManual = task === 'auto_patrol' && rcTaskMode === 'manual';
-    if(task === 'auto_patrol'){
-      var robot = robotsData.find(function(item){ return item.id === rcActiveRobotId; });
-      var autoTaskName = cockpitPreferredAutoTaskName(robot);
-      if(!autoTaskName){
-        showToast('暂无已配置的巡检路线，请先前往后台配置', 'warning');
-        return;
-      }
-      rcTaskInitialName = autoTaskName;
-    } else {
-      rcTaskInitialName = map[task];
+  if(task === 'auto_patrol'){
+    var switchingFromManual = rcTaskMode === 'manual';
+    var robot = robotsData.find(function(item){ return item.id === rcActiveRobotId; });
+    var autoTaskName = cockpitPreferredAutoTaskName(robot);
+    if(!autoTaskName){
+      showToast('暂无已配置的巡检路线，请先前往后台配置', 'warning');
+      return;
     }
-    if(task === 'auto_patrol' || rcTaskMode !== task) rcStopMove();
-    rcTaskMode = task;
+    rcStopMove();
+    rcTaskInitialName = autoTaskName;
+    rcTaskMode = 'auto_patrol';
     rcTaskState = 'running';
     rcTaskPausedFrom = '';
     rcSyncTaskButtons();
-    showToast(task === 'auto_patrol'
-      ? (switchingFromManual ? '📋 已重新开始执行默认任务：' : '📋 已启动自动巡检任务：')+rcTaskInitialName
-      : '📋 已切换为手动巡检模式', 'success');
+    showToast((switchingFromManual ? '📋 已重新开始执行默认任务：' : '📋 已启动自动巡检任务：')+rcTaskInitialName, 'success');
+    console.log('[RC] 巡检模式:', task);
+    return;
+  }
+
+  if(task === 'manual'){
+    rcStopMove();
+    rcTaskMode = 'manual';
+    rcTaskState = 'idle';
+    rcTaskPausedFrom = '';
+    rcTaskInitialName = '暂无执行中任务';
+    rcSyncTaskButtons();
+    showToast('📋 已切换为手动巡检模式', 'success');
     console.log('[RC] 巡检模式:', task);
     return;
   }
@@ -26389,7 +26395,7 @@ function rcSyncTaskButtons(){
     if(action === 'resume') button.disabled = rcTaskState !== 'paused';
   });
 
-  var manualEnabled = rcTaskMode === 'manual' && rcTaskState === 'running';
+  var manualEnabled = rcTaskMode === 'manual' && rcTaskState !== 'paused';
   var dial = document.getElementById('ckDial');
   if(dial) dial.classList.toggle('ck-direction-locked', !manualEnabled);
   document.querySelectorAll('.ck-dial-dir, .ck-dial-rot-l, .ck-dial-rot-r').forEach(function(button){
