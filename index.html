@@ -3287,12 +3287,6 @@ bdeploy-model-group { margin-bottom:8px; }
   box-shadow:0 0 8px rgba(56,189,248,.45);
 }
 .ck-console-speed b { font-size:12px; color:#38bdf8; min-width:26px; text-align:right; }
-.ck-console-task {
-  width:220px; max-width:220px; margin-top:10px; box-sizing:border-box;
-  justify-content:center;
-}
-.ck-console-task .ck-current-task-label { color:#7dd3fc; }
-
 /* ---------- r107 右侧控制面板：全功能分区域 ---------- */
 .ck-right-panel {
   position:absolute; left:calc(50% + 170px); top:4px; right:14px; bottom:10px;
@@ -25784,8 +25778,6 @@ function renderCockpitHTML(robot) {
 
 function renderCockpitCenterConsole(robot){
   var battery = robot.battery != null ? robot.battery : 87;
-  var currentTaskName = cockpitCurrentTaskName(robot);
-  var currentTaskEmpty = currentTaskName === '暂无执行中任务';
   var robotSvg = '<svg viewBox="0 0 64 64" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="18" r="10" fill="rgba(56,189,248,.12)"/><path d="M22 34h20M28 34l-6 14M36 34l6 14"/><circle cx="26" cy="50" r="4" fill="rgba(56,189,248,.1)"/><circle cx="38" cy="50" r="4" fill="rgba(56,189,248,.1)"/></svg>';
   return '<div class="ck-dial" id="ckDial">'
     + '<div class="ck-dial-ring"></div>'
@@ -25806,11 +25798,6 @@ function renderCockpitCenterConsole(robot){
     + '<span>速度</span>'
     + '<input type="range" min="0" max="1" step="0.01" value="'+rcSpeed+'" oninput="rcSpeedChange(this.value)">'
     + '<b id="ckConsoleSpeedVal">'+rcSpeed.toFixed(1)+'</b>'
-  + '</div>'
-  + '<div class="ck-current-task ck-console-task'+(currentTaskEmpty?' empty':'')+'" title="当前任务：'+esc(currentTaskName)+'">'
-    + '<span class="ck-current-task-dot"></span>'
-    + '<span class="ck-current-task-label">当前任务</span>'
-    + '<b>'+esc(currentTaskName)+'</b>'
   + '</div>';
 }
 
