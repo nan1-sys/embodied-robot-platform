@@ -25828,9 +25828,9 @@ function renderCockpitRightActions(robot){
   // 2. 姿态动作
   html += '<div><div class="ck-section-title">姿态动作</div>';
   html += '<div class="ck-btn-grid ck-grid-3">';
-  html += '<button class="ck-ctrl-btn" onclick="rcSendAction(\'squat\')">🦵 下蹲</button>';
-  html += '<button class="ck-ctrl-btn" onclick="rcSendAction(\'stand\')">🧍 站立</button>';
-  html += '<button class="ck-ctrl-btn" onclick="rcSendAction(\'climb\')">🧗 爬坡</button>';
+  html += '<button class="ck-ctrl-btn'+(rcActivePosture==='lower'?' ck-posture-active':'')+'" data-posture="lower" aria-pressed="'+(rcActivePosture==='lower')+'" onclick="rcSendAction(\'lower\')">🦵 下降</button>';
+  html += '<button class="ck-ctrl-btn'+(rcActivePosture==='stand'?' ck-posture-active':'')+'" data-posture="stand" aria-pressed="'+(rcActivePosture==='stand')+'" onclick="rcSendAction(\'stand\')">🧍 站立</button>';
+  html += '<button class="ck-ctrl-btn'+(rcActivePosture==='climb'?' ck-posture-active':'')+'" data-posture="climb" aria-pressed="'+(rcActivePosture==='climb')+'" onclick="rcSendAction(\'climb\')">🧗 爬坡</button>';
   html += '</div></div>';
 
   // 3. 任务控制
