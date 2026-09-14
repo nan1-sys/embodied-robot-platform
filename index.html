@@ -3254,6 +3254,14 @@ bdeploy-model-group { margin-bottom:8px; }
 .ck-dial-rot-l:active, .ck-dial-rot-r:active { transform:scale(.9); }
 .ck-dial-rot-l { top:28px; left:28px; }
 .ck-dial-rot-r { top:28px; right:28px; }
+.ck-dial .ck-dial-dir:disabled,
+.ck-dial .ck-dial-rot-l:disabled,
+.ck-dial .ck-dial-rot-r:disabled {
+  opacity:.28; cursor:not-allowed; pointer-events:none; filter:grayscale(1);
+  box-shadow:none;
+}
+.ck-dial.ck-direction-locked .ck-dial-ring,
+.ck-dial.ck-direction-locked .ck-dial-ring-2 { opacity:.48; }
 .ck-dial-center {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
   width:96px; height:96px; border-radius:50%;
@@ -25809,16 +25817,18 @@ function renderCockpitHTML(robot) {
 
 function renderCockpitCenterConsole(robot){
   var battery = robot.battery != null ? robot.battery : 87;
+  var manualControlEnabled = rcTaskMode === 'manual' && rcTaskState === 'running';
+  var manualControlAttrs = manualControlEnabled ? '' : ' disabled aria-disabled="true" title="请先切换至手动巡检模式"';
   var robotSvg = '<svg viewBox="0 0 64 64" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="18" r="10" fill="rgba(56,189,248,.12)"/><path d="M22 34h20M28 34l-6 14M36 34l6 14"/><circle cx="26" cy="50" r="4" fill="rgba(56,189,248,.1)"/><circle cx="38" cy="50" r="4" fill="rgba(56,189,248,.1)"/></svg>';
-  return '<div class="ck-dial" id="ckDial">'
+  return '<div class="ck-dial'+(manualControlEnabled?'':' ck-direction-locked')+'" id="ckDial">'
     + '<div class="ck-dial-ring"></div>'
     + '<div class="ck-dial-ring-2"></div>'
-    + '<button class="ck-dial-dir ck-dial-up" onmousedown="rcSendCmd(\'forward\')" ontouchstart="rcSendCmd(\'forward\')">▲</button>'
-    + '<button class="ck-dial-dir ck-dial-down" onmousedown="rcSendCmd(\'backward\')" ontouchstart="rcSendCmd(\'backward\')">▼</button>'
-    + '<button class="ck-dial-dir ck-dial-left" onmousedown="rcSendCmd(\'left\')" ontouchstart="rcSendCmd(\'left\')">◀</button>'
-    + '<button class="ck-dial-dir ck-dial-right" onmousedown="rcSendCmd(\'right\')" ontouchstart="rcSendCmd(\'right\')">▶</button>'
-    + '<button class="ck-dial-rot-l" onmousedown="rcSendCmd(\'rotate_left\')" ontouchstart="rcSendCmd(\'rotate_left\')" title="左旋">↺</button>'
-    + '<button class="ck-dial-rot-r" onmousedown="rcSendCmd(\'rotate_right\')" ontouchstart="rcSendCmd(\'rotate_right\')" title="右旋">↻</button>'
+    + '<button class="ck-dial-dir ck-dial-up"'+manualControlAttrs+' onmousedown="rcSendCmd(\'forward\')" ontouchstart="rcSendCmd(\'forward\')">▲</button>'
+    + '<button class="ck-dial-dir ck-dial-down"'+manualControlAttrs+' onmousedown="rcSendCmd(\'backward\')" ontouchstart="rcSendCmd(\'backward\')">▼</button>'
+    + '<button class="ck-dial-dir ck-dial-left"'+manualControlAttrs+' onmousedown="rcSendCmd(\'left\')" ontouchstart="rcSendCmd(\'left\')">◀</button>'
+    + '<button class="ck-dial-dir ck-dial-right"'+manualControlAttrs+' onmousedown="rcSendCmd(\'right\')" ontouchstart="rcSendCmd(\'right\')">▶</button>'
+    + '<button class="ck-dial-rot-l"'+manualControlAttrs+' onmousedown="rcSendCmd(\'rotate_left\')" ontouchstart="rcSendCmd(\'rotate_left\')">↺</button>'
+    + '<button class="ck-dial-rot-r"'+manualControlAttrs+' onmousedown="rcSendCmd(\'rotate_right\')" ontouchstart="rcSendCmd(\'rotate_right\')">↻</button>'
     + '<div class="ck-dial-center" onclick="rcEmergencyStop()">'
       + '<span class="ck-dial-battery" id="ckDialBattery">'+battery+'%</span>'
       + robotSvg
@@ -26237,6 +26247,7 @@ function rcSendTask(task) {
   var map = { auto_patrol:'自动巡检', manual:'手动巡检', pause:'暂停任务', resume:'恢复任务', stop:'终止任务', home:'返航' };
 
   if(task === 'auto_patrol' || task === 'manual'){
+    if(task === 'auto_patrol' || rcTaskMode !== task) rcStopMove();
     rcTaskMode = task;
     rcTaskState = 'running';
     rcTaskPausedFrom = '';
@@ -26325,8 +26336,11 @@ function rcSyncTaskButtons(){
   });
 
   var manualEnabled = rcTaskMode === 'manual' && rcTaskState === 'running';
+  var dial = document.getElementById('ckDial');
+  if(dial) dial.classList.toggle('ck-direction-locked', !manualEnabled);
   document.querySelectorAll('.ck-dial-dir, .ck-dial-rot-l, .ck-dial-rot-r').forEach(function(button){
     button.disabled = !manualEnabled;
+    button.setAttribute('aria-disabled', manualEnabled ? 'false' : 'true');
     button.title = manualEnabled ? '' : '请先切换至手动巡检模式';
   });
 
