@@ -32503,8 +32503,17 @@ function renderCalibrate(){
     +     '</div>'
     +   '</div>'
     + '</div>';
-  setTimeout(function(){ ensureCalibMap(); }, 60);
+  setTimeout(function(){ ensureCalibMap(); syncCalibPanelPosition(); }, 60);
   return html;
+}
+
+function syncCalibPanelPosition(){
+  var toolbar=document.getElementById('calibToolbar');
+  var panel=document.getElementById('calibCtrlPanel');
+  if(!toolbar || !panel) return;
+  var top=toolbar.offsetTop+toolbar.offsetHeight+8;
+  panel.style.top=top+'px';
+  panel.style.maxHeight='calc(100% - '+(top+12)+'px)';
 }
 
 function openCalibMapModal(){
@@ -32661,6 +32670,7 @@ function selectCalibMap(id){
   var toolbar=document.getElementById('calibToolbar'); if(toolbar) toolbar.style.display='flex';
   var coord=document.getElementById('calibCoordDisplay'); if(coord) coord.classList.remove('hidden');
   var panel=document.getElementById('calibCtrlPanel'); if(panel) panel.classList.remove('hidden');
+  syncCalibPanelPosition();
   var tag=document.getElementById('calibCurrentTag');
   if(tag && m){
     var tagName=tag.querySelector('b');
