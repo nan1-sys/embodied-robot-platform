@@ -26106,9 +26106,43 @@ function rcToggleSwitch(name, checked) {
 }
 
 function rcSendAction(action) {
-  var map = { climb:'爬坡', squat:'下蹲', stand:'站立' };
-  showToast('🐾 执行动作：'+(map[action]||action));
-  console.log('[RC] 动作:', action);
+  if(action === 'squat') action = 'lower';
+  var map = { lower:'下降', stand:'站立', climb:'爬坡' };
+  var actionName = map[action] || action;
+
+  // Toggle：再次点击当前姿态即撤回指令。
+  if(rcActivePosture === action){
+    rcActivePosture = '';
+    rcSyncPostureButtons();
+    showToast('↩️ 已撤回“'+actionName+'”指令，机器人将恢复默认安全姿态', 'warning');
+    console.log('[RC] 撤回姿态动作:', action);
+    return;
+  }
+
+  var robot = robotsData.find(function(item){ return item.id === rcActiveRobotId; });
+  var currentTaskName = robot ? cockpitCurrentTaskName(robot) : '暂无执行中任务';
+  var hasRunningTask = currentTaskName !== '暂无执行中任务';
+  var isHighSpeed = rcSpeed >= 0.6;
+  if(hasRunningTask || isHighSpeed){
+    var warning = hasRunningTask
+      ? '机器人正在执行自动任务“'+currentTaskName+'”'+(isHighSpeed?'，且当前速度较高':'')+'。\n切换姿态可能影响机器人稳定性，是否打断当前自动任务并下发“'+actionName+'”指令？'
+      : '机器人当前速度较高，切换姿态可能导致机器人失稳。\n是否继续下发“'+actionName+'”指令？';
+    if(!window.confirm(warning)) return;
+  }
+
+  // 单选互斥：新姿态直接替换旧姿态。
+  rcActivePosture = action;
+  rcSyncPostureButtons();
+  showToast('🐾 已下发姿态指令：'+actionName);
+  console.log('[RC] 姿态动作:', action);
+}
+
+function rcSyncPostureButtons(){
+  document.querySelectorAll('[data-posture]').forEach(function(button){
+    var selected = button.getAttribute('data-posture') === rcActivePosture;
+    button.classList.toggle('ck-posture-active', selected);
+    button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  });
 }
 
 function rcSwitchControlTab(tab){
