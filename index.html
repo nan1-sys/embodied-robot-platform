@@ -3402,6 +3402,11 @@ bdeploy-model-group { margin-bottom:8px; }
 .ck-ctrl-btn.success:hover { background:rgba(34,197,94,.18); border-color:#22c55e; }
 .ck-ctrl-btn.danger { border-color:rgba(239,68,68,.4); }
 .ck-ctrl-btn.danger:hover { background:rgba(239,68,68,.18); border-color:#ef4444; }
+.ck-ctrl-btn.ck-task-unavailable,
+.ck-ctrl-btn.ck-task-unavailable:hover {
+  opacity:.42; cursor:not-allowed; transform:none; box-shadow:none;
+  color:#94a3b8; background:rgba(71,85,105,.18); border-color:rgba(148,163,184,.24);
+}
 .ck-ctrl-btn.sm { padding:5px 4px; font-size:10px; min-height:28px; }
 
 /* 设备信息网格 — 单行键值卡片 */
@@ -25877,9 +25882,11 @@ function renderCockpitRightActions(robot){
   html += '</div></div>';
 
   // 3. 任务控制
+  var autoTaskName = cockpitPreferredAutoTaskName(robot);
+  var autoTaskUnavailable = !autoTaskName;
   html += '<div><div class="ck-section-title">任务控制</div>';
   html += '<div class="ck-btn-grid ck-grid-3">';
-  html += '<button class="ck-ctrl-btn success'+(rcTaskMode==='auto_patrol'?' ck-task-active':'')+'" data-task-action="auto_patrol" aria-pressed="'+(rcTaskMode==='auto_patrol')+'" onclick="rcSendTask(\'auto_patrol\')">🔄 自动巡检</button>';
+  html += '<button class="ck-ctrl-btn success'+(rcTaskMode==='auto_patrol'?' ck-task-active':'')+(autoTaskUnavailable?' ck-task-unavailable':'')+'" data-task-action="auto_patrol" aria-pressed="'+(rcTaskMode==='auto_patrol')+'" aria-disabled="'+autoTaskUnavailable+'" title="'+(autoTaskUnavailable?'暂无已配置的巡检路线，请先前往后台配置':'默认任务：'+esc(autoTaskName))+'" onclick="rcSendTask(\'auto_patrol\')">🔄 自动巡检</button>';
   html += '<button class="ck-ctrl-btn'+(rcTaskMode==='manual'?' ck-task-active':'')+'" data-task-action="manual" aria-pressed="'+(rcTaskMode==='manual')+'" onclick="rcSendTask(\'manual\')">🕹️ 手动巡检</button>';
   html += '<button class="ck-ctrl-btn'+(rcTaskState==='paused'?' ck-task-active':'')+'" data-task-action="pause" aria-pressed="'+(rcTaskState==='paused')+'" onclick="rcSendTask(\'pause\')">⏸ 暂停</button>';
   html += '<button class="ck-ctrl-btn success" data-task-action="resume" onclick="rcSendTask(\'resume\')">▶ 恢复</button>';
@@ -26015,17 +26022,16 @@ function cockpitPreferredAutoTaskName(robot){
     if(!plan) return false;
     return (robotId && plan.robotId === robotId) || (robotName && plan.robotName === robotName);
   }) : [];
-  var running = plans.filter(function(plan){ return plan.status === 'running' || plan.status === 'executing'; })[0];
+  var availablePlans = plans.filter(function(plan){
+    return plan.status !== 'disabled' && !!(plan.pathId || plan.pathName);
+  });
+  var running = availablePlans.filter(function(plan){ return plan.status === 'running' || plan.status === 'executing'; })[0];
   if(running && running.name) return running.name;
-  var available = plans.filter(function(plan){ return plan.status !== 'disabled'; })[0];
-  if(available && available.name) return available.name;
-
-  // 原型兜底：若暂无绑定中的任务，沿用该机器人最近执行过的巡检任务。
-  var reports = Array.isArray(taskReports) ? taskReports.filter(function(report){
-    if(!report) return false;
-    return (robotId && report.robotId === robotId) || (robotName && report.robotName === robotName);
-  }) : [];
-  return reports[0] && reports[0].taskName ? reports[0].taskName : '';
+  var presetDefault = availablePlans.filter(function(plan){
+    return plan.isDefault === true || plan.defaultTask === true || plan.default === true;
+  })[0];
+  if(presetDefault && presetDefault.name) return presetDefault.name;
+  return availablePlans[0] && availablePlans[0].name ? availablePlans[0].name : '';
 }
 
 function rcTaskCurrentLabel(){
@@ -26282,11 +26288,12 @@ function rcSendTask(task) {
   var map = { auto_patrol:'自动巡检', manual:'手动巡检', pause:'暂停任务', resume:'恢复任务', stop:'终止任务', home:'返航' };
 
   if(task === 'auto_patrol' || task === 'manual'){
+    var switchingFromManual = task === 'auto_patrol' && rcTaskMode === 'manual';
     if(task === 'auto_patrol'){
       var robot = robotsData.find(function(item){ return item.id === rcActiveRobotId; });
       var autoTaskName = cockpitPreferredAutoTaskName(robot);
       if(!autoTaskName){
-        showToast('当前机器人暂无可执行的自动巡检任务', 'warning');
+        showToast('暂无已配置的巡检路线，请先前往后台配置', 'warning');
         return;
       }
       rcTaskInitialName = autoTaskName;
@@ -26298,7 +26305,9 @@ function rcSendTask(task) {
     rcTaskState = 'running';
     rcTaskPausedFrom = '';
     rcSyncTaskButtons();
-    showToast(task === 'auto_patrol' ? '📋 已启动自动巡检：'+rcTaskInitialName : '📋 已切换为手动巡检模式', 'success');
+    showToast(task === 'auto_patrol'
+      ? (switchingFromManual ? '📋 已重新开始执行默认任务：' : '📋 已启动自动巡检任务：')+rcTaskInitialName
+      : '📋 已切换为手动巡检模式', 'success');
     console.log('[RC] 巡检模式:', task);
     return;
   }
