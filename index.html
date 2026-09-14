@@ -2982,14 +2982,14 @@ bdeploy-model-group { margin-bottom:8px; }
   border-bottom-left-radius:50% 26px;
   border-bottom-right-radius:50% 26px;
 }
-.ck-title { display:flex; align-items:center; gap:10px; justify-self:start; }
+.ck-title { display:flex; align-items:center; gap:10px; justify-self:start; min-width:0; }
 .ck-dot {
   width:10px; height:10px; border-radius:50%;
   background:#22c55e; box-shadow:0 0 10px #22c55e;
   animation:ckDotPulse 1.6s infinite;
 }
 @keyframes ckDotPulse { 0%,100%{opacity:1} 50%{opacity:.45} }
-.ck-device-name { font-size:17px; font-weight:800; letter-spacing:1px; color:#fff; }
+.ck-device-name { min-width:0; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:17px; font-weight:800; letter-spacing:1px; color:#fff; }
 .ck-badge {
   font-size:12px; font-weight:700; padding:3px 10px; border-radius:20px;
   background:rgba(34,197,94,.14); color:#4ade80; border:1px solid rgba(74,222,128,.35);
@@ -3031,11 +3031,15 @@ bdeploy-model-group { margin-bottom:8px; }
 .ck-close:hover { background:rgba(239,68,68,.22); border-color:rgba(239,68,68,.65); box-shadow:0 0 16px rgba(239,68,68,.25); }
 
 /* ---------- 主体舞台 ---------- */
-.ck-stage { flex:1; position:relative; display:flex; flex-direction:column; min-height:0; }
+.ck-stage {
+  --ck-dashboard-height:48%;
+  --ck-video-bottom:38%;
+  flex:1; position:relative; display:flex; flex-direction:column; min-height:0;
+}
 
 /* ---------- 4 路视频墙：左条 + 中大 + 右二 ---------- */
 .ck-video-wall {
-  position:absolute; inset:0; bottom:38%;
+  position:absolute; inset:0; bottom:var(--ck-video-bottom);
   display:grid;
   grid-template-columns:1fr 2.6fr 1fr;
   grid-template-rows:1fr 1fr;
@@ -3141,13 +3145,13 @@ bdeploy-model-group { margin-bottom:8px; }
 
 /* 弧形分隔：视频区与仪表板之间的弧线 */
 .ck-arc-separator {
-  position:absolute; left:0; right:0; bottom:38%; height:80px; z-index:5; pointer-events:none;
+  position:absolute; left:0; right:0; bottom:var(--ck-video-bottom); height:80px; z-index:5; pointer-events:none;
 }
 .ck-arc-separator svg { width:100%; height:100%; display:block; }
 
 /* ---------- 底部弧形仪表板 ---------- */
 .ck-dashboard {
-  position:absolute; left:0; right:0; bottom:0; height:48%;
+  position:absolute; left:0; right:0; bottom:0; height:var(--ck-dashboard-height);
   background:linear-gradient(180deg, rgba(7,17,35,.92) 0%, rgba(2,6,16,.98) 100%);
   border-top:3px solid rgba(56,189,248,.5);
   border-top-left-radius:50% 120px;
@@ -3290,7 +3294,7 @@ bdeploy-model-group { margin-bottom:8px; }
 
 /* ---------- r107 右侧控制面板：全功能分区域 ---------- */
 .ck-right-panel {
-  position:absolute; left:calc(50% + 170px); top:4px; right:14px; bottom:10px;
+  position:absolute; left:calc(50% + 170px); top:34px; right:14px; bottom:10px;
   display:flex; flex-direction:row; align-items:stretch; gap:10px;
   overflow:hidden; padding:0; z-index:3;
 }
@@ -3324,7 +3328,7 @@ bdeploy-model-group { margin-bottom:8px; }
 .ck-right-info .ck-section-title { white-space:nowrap; font-size:13px; }
 .ck-right-controls .ck-section-title { white-space:nowrap; font-size:13px; }
 .ck-right-controls .ck-ctrl-btn { font-size:13px; min-height:32px; }
-.ck-right-info { padding-top:40px; }
+.ck-right-info { padding-top:7px; }
 
 /* 开关行 */
 .ck-toggle-row {
@@ -3569,6 +3573,51 @@ bdeploy-model-group { margin-bottom:8px; }
 /* 驾驶舱内旧的 rfp-* 样式在中心控制台不再使用，保留基础兼容 */
 
 /* 响应式 */
+@media (max-width: 1800px) {
+  .ck-topbar { padding:0 18px; }
+  .ck-device-name { max-width:210px; }
+  .ck-metrics-wrap { gap:11px; }
+  .ck-metrics { gap:11px; }
+  .ck-current-task { max-width:190px; }
+}
+@media (max-width: 1500px) {
+  .ck-topbar { padding:0 12px; }
+  .ck-center-title { font-size:18px; padding:5px 18px; letter-spacing:3px; }
+  .ck-device-name { max-width:175px; font-size:15px; }
+  .ck-title { gap:7px; }
+  .ck-current-task { max-width:155px; padding:0 8px; }
+  .ck-current-task-label { display:none; }
+  .ck-metrics-wrap, .ck-metrics { gap:8px; }
+  .ck-close { padding:0 10px; }
+}
+@media (max-width: 1220px) {
+  .ck-device-name { max-width:140px; }
+  .ck-current-task { max-width:135px; }
+  .ck-metric:nth-child(1), .ck-metric:nth-child(2) { display:none; }
+  .ck-center-title { font-size:16px; padding:5px 14px; }
+}
+@media (max-height: 920px) {
+  .ck-stage { --ck-dashboard-height:50%; --ck-video-bottom:40%; }
+  .ck-console-panel { top:8px; }
+  .ck-dial { width:190px; height:190px; }
+  .ck-dial-center { width:86px; height:86px; }
+  .ck-console-speed { margin-top:30px; }
+  .ck-right-panel { top:30px; bottom:7px; }
+  .ck-right-card { padding-top:6px; padding-bottom:6px; }
+  .ck-upper-cards { gap:6px; }
+}
+@media (max-height: 800px) {
+  .ck-stage { --ck-dashboard-height:52%; --ck-video-bottom:42%; }
+  .ck-topbar { height:52px; }
+  .ck-console-panel { top:5px; width:280px; }
+  .ck-dial { width:170px; height:170px; }
+  .ck-dial-center { width:76px; height:76px; }
+  .ck-console-speed { width:190px; margin-top:22px; }
+  .ck-right-panel { top:26px; bottom:6px; }
+  .ck-info-grid { gap:3px; }
+  .ck-info-item { padding-top:3px; padding-bottom:3px; }
+  .ck-upper-card { padding-top:5px; padding-bottom:5px; }
+}
 @media (max-width: 1300px) {
   .ck-dashboard { height:46%; border-top-left-radius:50% 120px; border-top-right-radius:50% 120px; }
   .ck-map-panel { flex:1.05; max-width:28%; }
