@@ -26005,12 +26005,37 @@ function cockpitCurrentTaskName(robot){
   return current && current.name ? current.name : '暂无执行中任务';
 }
 
+function cockpitPreferredAutoTaskName(robot){
+  try {
+    if(typeof taskLoadAll === 'function') taskLoadAll();
+  } catch(e){}
+  var robotId = robot && robot.id ? robot.id : '';
+  var robotName = robot && robot.name ? robot.name : '';
+  var plans = Array.isArray(taskPlans) ? taskPlans.filter(function(plan){
+    if(!plan) return false;
+    return (robotId && plan.robotId === robotId) || (robotName && plan.robotName === robotName);
+  }) : [];
+  var running = plans.filter(function(plan){ return plan.status === 'running' || plan.status === 'executing'; })[0];
+  if(running && running.name) return running.name;
+  var available = plans.filter(function(plan){ return plan.status !== 'disabled'; })[0];
+  if(available && available.name) return available.name;
+
+  // 原型兜底：若暂无绑定中的任务，沿用该机器人最近执行过的巡检任务。
+  var reports = Array.isArray(taskReports) ? taskReports.filter(function(report){
+    if(!report) return false;
+    return (robotId && report.robotId === robotId) || (robotName && report.robotName === robotName);
+  }) : [];
+  return reports[0] && reports[0].taskName ? reports[0].taskName : '';
+}
+
 function rcTaskCurrentLabel(){
   if(rcTaskState === 'idle') return '暂无执行中任务';
-  var label = rcTaskState === 'returning'
-    ? '返航中'
-    : (rcTaskMode === 'manual' ? '手动巡检' : rcTaskInitialName);
-  if(!label || label === '暂无执行中任务') label = rcTaskMode === 'manual' ? '手动巡检' : '自动巡检';
+  var label = '自动巡检';
+  if(rcTaskState === 'returning') label = '返航中';
+  else if(rcTaskMode === 'manual') label = '手动巡检';
+  else if(rcTaskInitialName && rcTaskInitialName !== '暂无执行中任务' && rcTaskInitialName !== '自动巡检'){
+    label = '自动巡检 · '+rcTaskInitialName;
+  }
   return rcTaskState === 'paused' ? label+'（已暂停）' : label;
 }
 
@@ -26257,13 +26282,23 @@ function rcSendTask(task) {
   var map = { auto_patrol:'自动巡检', manual:'手动巡检', pause:'暂停任务', resume:'恢复任务', stop:'终止任务', home:'返航' };
 
   if(task === 'auto_patrol' || task === 'manual'){
+    if(task === 'auto_patrol'){
+      var robot = robotsData.find(function(item){ return item.id === rcActiveRobotId; });
+      var autoTaskName = cockpitPreferredAutoTaskName(robot);
+      if(!autoTaskName){
+        showToast('当前机器人暂无可执行的自动巡检任务', 'warning');
+        return;
+      }
+      rcTaskInitialName = autoTaskName;
+    } else {
+      rcTaskInitialName = map[task];
+    }
     if(task === 'auto_patrol' || rcTaskMode !== task) rcStopMove();
     rcTaskMode = task;
     rcTaskState = 'running';
     rcTaskPausedFrom = '';
-    rcTaskInitialName = map[task];
     rcSyncTaskButtons();
-    showToast('📋 已切换为'+map[task]+'模式', 'success');
+    showToast(task === 'auto_patrol' ? '📋 已启动自动巡检：'+rcTaskInitialName : '📋 已切换为手动巡检模式', 'success');
     console.log('[RC] 巡检模式:', task);
     return;
   }
