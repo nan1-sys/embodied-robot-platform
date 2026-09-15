@@ -26208,21 +26208,30 @@ function rcSendAction(action) {
 
   var robot = robotsData.find(function(item){ return item.id === rcActiveRobotId; });
   var currentTaskName = robot ? cockpitCurrentTaskName(robot) : '暂无执行中任务';
-  var hasRunningTask = currentTaskName !== '暂无执行中任务'
-    || (rcTaskMode === 'auto_patrol' && rcTaskState === 'running');
-  if(currentTaskName === '暂无执行中任务' && hasRunningTask) currentTaskName = '自动巡检';
+  var hasRunningTask = rcTaskMode === 'auto_patrol' && rcTaskState === 'running';
+  if(currentTaskName === '暂无执行中任务' && hasRunningTask){
+    currentTaskName = rcTaskInitialName && rcTaskInitialName !== '暂无执行中任务' ? rcTaskInitialName : '自动巡检';
+  }
   var isHighSpeed = rcSpeed >= 0.6;
   if(hasRunningTask || isHighSpeed){
     var warning = hasRunningTask
-      ? '机器人正在执行自动任务“'+currentTaskName+'”'+(isHighSpeed?'，且当前速度较高':'')+'。\n切换姿态可能影响机器人稳定性，是否打断当前自动任务并下发“'+actionName+'”指令？'
+      ? '机器人正在执行自动任务“'+currentTaskName+'”'+(isHighSpeed?'，且当前速度较高':'')+'。\n是否暂停当前任务并执行“'+actionName+'”？'
       : '机器人当前速度较高，切换姿态可能导致机器人失稳。\n是否继续下发“'+actionName+'”指令？';
     if(!window.confirm(warning)) return;
+  }
+
+  if(hasRunningTask){
+    rcTaskPausedFrom = 'running';
+    rcTaskState = 'paused';
+    rcSyncTaskButtons();
   }
 
   // 单选互斥：新姿态直接替换旧姿态。
   rcActivePosture = action;
   rcSyncPostureButtons();
-  showToast('🐾 已下发姿态指令：'+actionName);
+  showToast(hasRunningTask
+    ? '⏸ 已暂停自动任务“'+currentTaskName+'”，并下发姿态指令：'+actionName
+    : '🐾 已下发姿态指令：'+actionName);
   console.log('[RC] 姿态动作:', action);
 }
 
@@ -26384,7 +26393,7 @@ function rcSendTask(task) {
 function rcSyncTaskButtons(){
   document.querySelectorAll('[data-task-action]').forEach(function(button){
     var action = button.getAttribute('data-task-action');
-    var active = (action === 'auto_patrol' && rcTaskMode === 'auto_patrol')
+    var active = (action === 'auto_patrol' && rcTaskMode === 'auto_patrol' && rcTaskState === 'running')
       || (action === 'manual' && rcTaskMode === 'manual')
       || (action === 'pause' && rcTaskState === 'paused');
     button.classList.toggle('ck-task-active', active);
