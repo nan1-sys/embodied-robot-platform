@@ -26201,6 +26201,7 @@ function rcSendAction(action) {
   if(rcActivePosture === action){
     rcActivePosture = '';
     rcSyncPostureButtons();
+    rcSyncTaskButtons();
     showToast('↩️ 已撤回“'+actionName+'”指令，机器人将恢复默认安全姿态', 'warning');
     console.log('[RC] 撤回姿态动作:', action);
     return;
@@ -26229,6 +26230,7 @@ function rcSendAction(action) {
   // 单选互斥：新姿态直接替换旧姿态。
   rcActivePosture = action;
   rcSyncPostureButtons();
+  rcSyncTaskButtons();
   showToast(hasRunningTask
     ? '⏸ 已暂停自动任务“'+currentTaskName+'”，并下发姿态指令：'+actionName
     : '🐾 已下发姿态指令：'+actionName);
@@ -26316,6 +26318,10 @@ function rcSendTask(task) {
   }
 
   if(task === 'manual'){
+    if(rcActivePosture && rcActivePosture !== 'stand'){
+      showToast('请先切换至站立姿态，再进入手动巡检模式', 'warning');
+      return;
+    }
     rcStopMove();
     rcTaskMode = 'manual';
     rcTaskState = 'idle';
@@ -26344,6 +26350,10 @@ function rcSendTask(task) {
   if(task === 'resume'){
     if(rcTaskState !== 'paused'){
       showToast('当前没有已暂停的任务', 'warning');
+      return;
+    }
+    if(rcActivePosture && rcActivePosture !== 'stand'){
+      showToast('请先切换至站立姿态，再恢复自动任务', 'warning');
       return;
     }
     rcTaskState = rcTaskPausedFrom || 'running';
@@ -26404,13 +26414,14 @@ function rcSyncTaskButtons(){
     if(action === 'resume') button.disabled = rcTaskState !== 'paused';
   });
 
-  var manualEnabled = rcTaskMode === 'manual' && rcTaskState !== 'paused';
+  var postureAllowsMovement = !rcActivePosture || rcActivePosture === 'stand';
+  var manualEnabled = rcTaskMode === 'manual' && rcTaskState !== 'paused' && postureAllowsMovement;
   var dial = document.getElementById('ckDial');
   if(dial) dial.classList.toggle('ck-direction-locked', !manualEnabled);
   document.querySelectorAll('.ck-dial-dir, .ck-dial-rot-l, .ck-dial-rot-r').forEach(function(button){
     button.disabled = !manualEnabled;
     button.setAttribute('aria-disabled', manualEnabled ? 'false' : 'true');
-    button.title = manualEnabled ? '' : '请先切换至手动巡检模式';
+    button.title = manualEnabled ? '' : (!postureAllowsMovement ? '请先切换至站立姿态' : '请先切换至手动巡检模式');
   });
 
   var currentTaskLabel = rcTaskCurrentLabel();
