@@ -30111,6 +30111,7 @@ function paResolvePathPoints(path){
 }
 
 function renderPathArrange(){
+  pmLoadSchemesFromStorage();
   paLoadSchemesFromStorage();
   if(paState.view === 'edit' && paState.schemeId){ return renderPathSchemeEdit(); }
   return renderPathSchemeList();
@@ -30118,9 +30119,9 @@ function renderPathArrange(){
 
 /* v20.9.109 列表页与点位管理视觉一致：admin-filter-card + admin-table-card + admin-table-toolbar (含 view-toggle-group) + 分页 */
 function renderPathSchemeList(){
+  pmLoadSchemesFromStorage();
   paLoadSchemesFromStorage();
-  var enabledPSS = pmSchemes.filter(function(x){ return x.status !== 'disabled'; });
-  var canCreate = enabledPSS.length > 0;
+  var canCreate = paGetUsablePointSchemes().length > 0;
   var view = paState.schemeView || 'grid';
   var kw = (paState.keyword||'').trim().toLowerCase();
   var schemeList = paSchemes;
@@ -30178,7 +30179,7 @@ function renderPathSchemeList(){
     + '<div class="admin-table-title">路径列表（共 '+total+' 条）</div>'
     + '<div class="admin-table-actions">'
     + '<div class="view-toggle-group"><button class="view-toggle-btn'+(view==='grid'?' active':'')+'" onclick="paSetSchemeView(\'grid\')">▦ 卡片</button><button class="view-toggle-btn'+(view==='list'?' active':'')+'" onclick="paSetSchemeView(\'list\')">≣ 列表</button></div>'
-    + '<button class="admin-tool-btn primary" '+(canCreate?'onclick="paOpenCreateSchemeModal()"':'disabled style="opacity:.5;cursor:not-allowed;"')+'>＋ 新建路径</button>'
+    + '<button class="admin-tool-btn primary" title="'+(canCreate?'新建路径':'请先创建包含有效点位的点位方案')+'" '+(canCreate?'onclick="paOpenCreateSchemeModal()"':'disabled style="opacity:.5;cursor:not-allowed;"')+'>＋ 新建路径</button>'
     + '</div></div>';
   var pg = renderPaSchemePagination(total, page, totalPages);
   return filterCard + '<div class="admin-table-card">' + toolbar + listHtml + pg + '</div>';
